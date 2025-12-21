@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="MGDP: Mastering a Generalized Depth Perception Model for Quadruped Locomotion">
+  <meta property="og:title" content="MGDP: Mastering a Generalized Depth Perception Model for Quadruped Locomotion"/>
+  <meta property="og:description" content="MGDP: Mastering a Generalized Depth Perception Model for Quadruped Locomotion"/>
+  <meta property="og:url" content="URL OF THE WEBSITE"/>
+  <meta property="og:image" content="static/image/your_banner_image.png" />
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+
+  <meta name="twitter:title" content="MGDP: Mastering a Generalized Depth Perception Model for Quadruped Locomotion">
+  <meta name="twitter:description" content="MGDP: Mastering a Generalized Depth Perception Model for Quadruped Locomotion">
+  <meta name="twitter:image" content="static/images/your_twitter_banner_image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="keywords" content="Quadruped Locomotion, Reinforcement Learning, Depth Perception, Generalization">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>MGDP</title>
+  <link rel="icon" type="image/x-icon" href="static/images/favicon.png">
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://documentcloud.adobe.com/view-sdk/main.js"></script>
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script src="static/js/bulma-carousel.min.js"></script>
+  <script src="static/js/bulma-slider.min.js"></script>
+  <script src="static/js/index.js"></script>
+  <!-- MathJax -->
+  <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <h1 class="title is-1 publication-title"><font color="#9fd966">MGDP</font>: <font color="#9fd966">M</font>astering a <font color="#9fd966">G</font>eneralized <font color="#9fd966">D</font>epth <font color="#9fd966">P</font>erception Model for Quadruped Locomotion</h1>
+            <div class="is-size-5 publication-authors">
+              <!-- Paper authors -->
+              <span class="author-block">
+                <a href="#" target="_blank">Yinzhao Dong</a><sup>1,*</sup>,
+              </span>
+              <span class="author-block">
+                <a href="#" target="_blank">Ji Ma</a><sup>1,*</sup>,
+              </span>
+              <span class="author-block">
+                <a href="#" target="_blank">Yidan Lu</a><sup>1</sup>,
+              </span>
+              <span class="author-block">
+                <a href="#" target="_blank">Jiahui Zhang</a><sup>1</sup>,
+              </span>
+              <span class="author-block">
+                <a href="#" target="_blank">Wanyue Li</a><sup>1</sup>,
+              </span>
+              <br>
+              <span class="author-block">
+                <a href="#" target="_blank">Yeke Chen</a><sup>1</sup>,
+              </span>
+              <span class="author-block">
+                <a href="#" target="_blank">Xuechao Chen</a><sup>2</sup>,
+              </span>
+              <span class="author-block">
+                <a href="#" target="_blank">Zhangguo Yu</a><sup>2</sup>, and
+              </span>
+              <span class="author-block">
+                <a href="#" target="_blank">Peng Lu</a><sup>1,†</sup>
+              </span>
+            </div>
+
+            <div class="is-size-5 publication-authors">
+              <span class="author-block"><sup>1</sup>The University of Hong Kong (HKU), <br> <sup>2</sup>Beijing Institute of Technology (BIT)</span>
+            </div>
+            
+            <!-- <div style="margin-top: 20px; margin-bottom: 20px;"> -->
+              <!-- <img src="static/images/HKU_English_logo.png" style="height: 80px; margin-right: 30px;"> -->
+              <!-- <img src="static/images/Beijing_Institute_of_Technology_Logo.png" style="height: 80px;"> -->
+            <!-- </div> -->
+
+            <div class="is-size-5 publication-authors">
+              <span class="eql-cntrb"><small><sup>*</sup>Equal Contribution</small></span>
+              <span class="eql-cntrb"><small><sup>†</sup>Corresponding author</small></span>
+            </div>
+
+            <div class="column has-text-centered">
+              <div class="publication-links">
+                <!-- Arxiv PDF link -->
+                <!-- <span class="link-block">
+                  <a href="https://ieeexplore.ieee.org/document/11246655" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                    </span>
+                    <span>Paper</span>
+                  </a>
+                </span> -->
+                <!-- bilibili -->
+                <!-- <span class="link-block">
+                  <a href="https://www.bilibili.com/video/BV1VLZ8YtEzd" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="fas fa-video"></i>
+                    </span>
+                    <span>bilibili</span>
+                  </a>
+                </span> -->
+                <!-- youtube -->
+                <span class="link-block">
+                  <a href="https://youtu.be/yOGQvbQMUKE" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="fab fa-youtube"></i>
+                    </span>
+                    <span>Youtube</span>
+                  </a>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Teaser video-->
+  <section class="hero teaser">
+    <div class="container is-max-desktop">
+      <div class="hero-body">
+        <video poster="" id="tree" autoplay controls muted loop height="100%">
+          <source src="static/videos/MGDP_1.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+  </section>
+  <!-- End teaser video -->
+
+  <!-- Paper abstract -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Abstract</h2>
+          <div class="content has-text-justified">
+            <p>
+              Perception-based Deep Reinforcement Learning (DRL) controllers demonstrate impressive performance on challenging terrains. However, existing controllers still face core limitations, struggling to achieve both terrain generality and platform transferability, and are constrained by high computational overhead and sensitivity to sensor noise. To address these challenges fundamentally, we propose a generalized control framework: Mastering a Generalized Contrastive Perception Model (MGDP). We utilize NVIDIA Warp to enable efficient parallel computation of depth images, thereby mitigating the inherent high computational cost. The core of MGDP is a contrastive learning mechanism that extracts highly generalized, low-dimensional terrain feature representations from multi-modal inputs (depth images and height maps). This process not only facilitates effective decoupling of perception from dynamics but also significantly reduces the memory footprint during training. Additionally, the framework integrates an explicit depth map denoising mechanism to enhance policy robustness against sensor artifacts. Furthermore, we design terrain-adaptive reward functions that modulate penalty strengths according to terrain characteristics, enabling the policy to acquire complex locomotion skills (e.g., climbing, jumping, crawling, squeezing) in a single training stage without relying on cumbersome distillation pipelines. Experimental results demonstrate that MGDP not only endows the policy with superior cross-terrain generalization capability but also enables fast and efficient fine-tuning across diverse quadruped robot morphologies via its pre-trained, dynamics-decoupled perception model. This vigorously promotes the development of unified, efficient, and generalized frameworks for quadrupedal locomotion control.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- End paper abstract -->
+
+  <!-- Methodology -->
+  <section class="hero is-small">
+    <div class="hero-body">
+      <div class="container">
+        <div class="columns is-centered has-text-centered">
+          <div class="column is-four-fifths">
+            <div class="columns has-text-left">
+              <h2 class="title">Methodology</h2>
+            </div>
+            <img src="static/images/framework.png" alt="framework">
+            <div class="content has-text-left">
+              The framework of the proposed MGDP. The architecture is composed of a Generalized Depth Perception Model and a Generalized Perception-Based Locomotion Controller. The perception model takes multi-modal inputs (depth map and height map) and extracts a highly generalized, low-dimensional terrain feature via contrastive learning. This model integrates an explicit depth map denoising mechanism and achieves an effective decoupling of terrain perception from robot dynamics. The locomotion controller combines this generalized feature with proprioceptive history to output the final joint torque commands. This decoupled design is critical for achieving the policy's superior cross-terrain generality and fast platform transferability.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Perception Model Evaluation -->
+  <section class="hero is-small is-light">
+    <div class="hero-body">
+      <div class="container">
+        <div class="columns is-centered has-text-centered">
+          <div class="column is-four-fifths">
+            <div class="columns has-text-left">
+              <h2 class="title">Perception Model Evaluation</h2>
+            </div>
+            <div class="item item-video1" style="margin-bottom: 20px;">
+              <video poster="" id="video1" autoplay controls muted loop height="100%">
+                <source src="static/videos/sim/types/MGDP_sim_01.mp4" type="video/mp4">
+              </video>
+              <div class="content has-text-justified">
+                <p>
+                  We evaluate the cross-morphology generalization of our method on 9 distinct quadruped robots: A1, B1, Go1, Go2, Lite3, Spot, Aliengo, ANYmal C, and Mini Cheetah. Despite significant differences in their physical dimensions and dynamic properties, our framework enables all of them to successfully traverse challenging terrains.
+                </p>
+              </div>
+            </div>
+            <div class="item item-video2">
+              <video poster="" id="video2" autoplay controls muted loop height="100%">
+                <source src="static/videos/sim/types/MGDP_sim_06.mp4" type="video/mp4">
+              </video>
+              <div class="content has-text-justified">
+                Comparison of predicted and real height maps across different terrains (step stones, narrow corridor, beams) at different time steps.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cross-Morphology Generalization -->
+  <section class="hero is-small">
+    <div class="hero-body">
+      <div class="container">
+        <div class="columns is-centered has-text-centered">
+          <div class="column is-four-fifths">
+            <div class="columns has-text-left">
+              <h2 class="title">Cross-Morphology Generalization</h2>
+            </div>
+            <div id="results-carousel" class="carousel results-carousel">
+              <div class="item item-video1">
+                <video poster="" id="video1" autoplay controls muted loop height="100%">
+                  <source src="static/videos/sim/types/MGDP_sim_02.mp4" type="video/mp4">
+                </video>
+              </div>
+              <div class="item item-video2">
+                <video poster="" id="video2" autoplay controls muted loop height="100%">
+                  <source src="static/videos/sim/types/MGDP_sim_03.mp4" type="video/mp4">
+                </video>
+              </div>
+              <div class="item item-video3">
+                <video poster="" id="video3" autoplay controls muted loop height="100%">
+                  <source src="static/videos/sim/types/MGDP_sim_04.mp4" type="video/mp4">
+                </video>
+              </div>
+              <div class="item item-video4">
+                <video poster="" id="video4" autoplay controls muted loop height="100%">
+                  <source src="static/videos/sim/types/MGDP_sim_04.mp4" type="video/mp4">
+                </video>
+              </div>
+              <div class="item item-video5">
+                <video poster="" id="video5" autoplay controls muted loop height="100%">
+                  <source src="static/videos/sim/types/MGDP_sim_05.mp4" type="video/mp4">
+                </video>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Simulation Experiments -->
+  <section class="hero is-small is-light">
+    <div class="hero-body">
+      <div class="container">
+        <div class="columns is-centered has-text-centered">
+          <div class="column is-four-fifths">
+            <div class="columns has-text-left">
+              <h2 class="title">Simulation Experiments</h2>
+            </div>
+            <div class="content has-text-justified">
+              <p>
+                We evaluate the proposed MGDP framework on a diverse set of challenging terrains in simulation. The experiments cover various obstacle types, including discrete gaps, stepping stones, and continuous rough terrain. The results demonstrate that our method enables the quadruped robot to achieve robust and agile locomotion, effectively handling complex environmental features.
+              </p>
+            </div>
+            <div id="results-carousel" class="carousel results-carousel">
+              <div class="item item-video1">
+                <video poster="" id="video1" autoplay controls muted loop height="100%">
+                  <source src="static/videos/sim/terrains/air-beams.mp4" type="video/mp4">
+                </video>
+              </div>
+              <div class="item item-video2">
+                <video poster="" id="video2" autoplay controls muted loop height="100%">
+                  <source src="static/videos/sim/terrains/air_stone.mp4" type="video/mp4">
+                </video>
+              </div>
+              <div class="item item-video3">
+                <video poster="" id="video3" autoplay controls muted loop height="100%">
+                  <source src="static/videos/sim/terrains/continuous-gaps.mp4" type="video/mp4">
+                </video>
+              </div>
+              <div class="item item-video4">
+                <video poster="" id="video4" autoplay controls muted loop height="100%">
+                  <source src="static/videos/sim/terrains/corridor.mp4" type="video/mp4">
+                </video>
+              </div>
+              <div class="item item-video5">
+                <video poster="" id="video5" autoplay controls muted loop height="100%">
+                  <source src="static/videos/sim/terrains/gap.mp4" type="video/mp4">
+                </video>
+              </div>
+            </div>
+            <div style="margin-top: 20px;"></div>
+            <div id="results-carousel-2" class="carousel results-carousel">
+              <div class="item item-video1">
+                <video poster="" id="video1" autoplay controls muted loop height="100%">
+                  <source src="static/videos/sim/terrains/Stones-2Rows.mp4" type="video/mp4">
+                </video>
+              </div>
+              <div class="item item-video2">
+                <video poster="" id="video2" autoplay controls muted loop height="100%">
+                  <source src="static/videos/sim/terrains/hurdle.mp4" type="video/mp4">
+                </video>
+              </div>
+              <div class="item item-video3">
+                <video poster="" id="video3" autoplay controls muted loop height="100%">
+                  <source src="static/videos/sim/terrains/hurdle1.mp4" type="video/mp4">
+                </video>
+              </div>
+              <div class="item item-video4">
+                <video poster="" id="video4" autoplay controls muted loop height="100%">
+                  <source src="static/videos/sim/terrains/ramp.mp4" type="video/mp4">
+                </video>
+              </div>
+              <div class="item item-video5">
+                <video poster="" id="video5" autoplay controls muted loop height="100%">
+                  <source src="static/videos/sim/terrains/single-bridge.mp4" type="video/mp4">
+                </video>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quantitative Analysis -->
+  <section class="hero is-small">
+    <div class="hero-body">
+      <div class="container">
+        <div class="columns is-centered has-text-centered">
+          <div class="column is-four-fifths">
+            <hr style="margin-top: 0px; margin-bottom: 30px;">
+            <div class="columns has-text-left">
+              <h2 class="title">Quantitative Analysis</h2>
+            </div>
+            <div class="columns is-vcentered">
+              <div class="column">
+                <img src="static/images/sucess_rate.png" alt="terrain" style="height: 100%; object-fit: contain;">
+              </div>
+              <div class="column">
+                <img src="static/images/terrain.png" alt="success_rate" style="height: 100%; object-fit: contain;">
+              </div>
+            </div>
+            <div class="content has-text-left">
+              Comparison of terrain traversal performance among 9 quadruped robots across 10 types of extreme terrains. Each cell displays the ratio of the maximum difficulty that a robot can stably traverse to the greatest difficulty of the corresponding extreme terrain, intuitively reflecting the upper limit of its traversal capability.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Real-World Experiments -->
+  <section class="hero is-small is-light">
+    <div class="hero-body">
+      <div class="container">
+        <div class="columns is-centered has-text-centered">
+          <div class="column is-four-fifths">
+            <div class="columns has-text-left">
+              <h2 class="title">Real-World Experiments</h2>
+            </div>
+            <div class="content has-text-justified">
+              <p>
+                We conduct extensive real-world experiments to validate the robustness and generalization of the proposed MGDP framework. The policy is directly deployed on the physical robot to traverse various challenging terrains, including stairs, slopes, and outdoor unstructured environments, demonstrating successful sim-to-real transfer.
+              </p>
+            </div>
+            <div class="columns is-vcentered">
+              <div class="column is-half">
+                <img src="static/images/cover.png" alt="Real World Experiments Cover 1" style="width: 100%; margin-bottom: 10px; border-radius: 4px;">
+                <img src="static/images/hardware_seesaw.png" alt="Real World Experiments Cover 2" style="width: 100%; border-radius: 4px;">
+              </div>
+              <div class="column is-half">
+                <div class="item item-video1" style="margin-bottom: 10px;">
+                  <video poster="" id="video1" autoplay controls muted loop width="100%">
+                    <source src="static/videos/real/real_1.mp4" type="video/mp4">
+                  </video>
+                </div>
+                <div class="item item-video2" style="margin-bottom: 10px;">
+                  <video poster="" id="video2" autoplay controls muted loop width="100%">
+                    <source src="static/videos/real/real_2.mp4" type="video/mp4">
+                  </video>
+                </div>
+                <div class="item item-video3">
+                  <video poster="" id="video3" autoplay controls muted loop width="100%">
+                    <source src="static/videos/real/real_3.mp4" type="video/mp4">
+                  </video>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-8">
+          <div class="content">
+            <p>
+              This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
