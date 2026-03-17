@@ -1,0 +1,682 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot name="solo">
+  <link name="base">
+    <!-- BASE LINK INERTIAL -->
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1.16115091"/>
+      <!-- The base is extremely symmetrical. -->
+      <inertia ixx="0.00578574" ixy="0.0" ixz="0.0" iyy="0.01938108" iyz="0.0" izz="0.02476124"/>
+    </inertial>
+    <!-- BASE LINK VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/solo_12_base.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- BASE LINK COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/solo_12_base.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <!-- Bullet specific paramters -->
+  </link>
+  <!-- END BASE LINK -->
+  <joint name="FL_hip_joint" type="revolute">
+    <parent link="base"/>
+    <child link="FL_hip"/>
+    <limit effort="1000" lower="-10" upper="10" velocity="1000"/>
+    <!-- joints rotates around the x-axis -->
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0.1946 0.0875 0"/>
+    <!-- pybullet simulation parameters -->
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  <link name="FL_hip">
+    <!-- TODO: Update inertias. -->
+    <!-- create a dummy shoulder link to join the two joints -->
+    <!-- HAA VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="0.01950 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/solo12_hip_fe_fl.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- HAA LINK COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0.01950 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/solo12_hip_fe_fl.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <inertial>
+      <mass value="0.14853845"/>
+      <!-- HAA body inertia -->
+      <origin rpy="0 0 0" xyz="-0.07870700 0.01 0."/>
+      <inertia ixx="0.00003024" ixy="0.00004671" ixz="0.0" iyy="0.00041193" iyz="0.0" izz="0.00041107"/>
+    </inertial>
+  </link>
+  <joint name="FL_thigh_joint" type="revolute">
+    <parent link="FL_hip"/>
+    <child link="FL_thigh"/>
+    <limit effort="1000" lower="-10" upper="10" velocity="1000"/>
+    <!-- joints rotates around the y-axis -->
+    <axis xyz="0 1 0"/>
+    <origin rpy="0 0 0" xyz="0 0.014 0"/>
+    <!-- pybullet simulation parameters -->
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  <link name="FL_thigh">
+    <!-- Left upper leg inertia -->
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.00001377 0.01935853 -0.07870700"/>
+      <mass value="0.14853845"/>
+      <inertia ixx="0.00041107" ixy="0.0" ixz="0.0" iyy="0.00041193" iyz="0.00004671" izz="0.00003024"/>
+    </inertial>
+    <!-- UPPER LEG LINK VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_upper_leg_left_side.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- UPPER LEG LINK COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_upper_leg_left_side.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <!-- Bullet specific paramters -->
+  </link>
+  <!-- END UPPER LEG LINK -->
+  <!-- KFE: Joint between the upper leg and the lower leg -->
+  <joint name="FL_calf_joint" type="revolute">
+    <parent link="FL_thigh"/>
+    <child link="FL_calf"/>
+    <limit effort="1000" lower="-10" upper="10" velocity="1000"/>
+    <!-- joints rotates around the y-axis -->
+    <axis xyz="0 1 0"/>
+    <origin rpy="0 0 0" xyz="0 0.03745 -0.16"/>
+    <!-- pybullet simulation parameters -->
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  <link name="FL_calf">
+    <!-- Left lower leg inertia -->
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.0 0.00787644 -0.08928215"/>
+      <mass value="0.03070001"/>
+      <inertia ixx="0.00012024" ixy="0.0" ixz="0.0" iyy="0.00012029" iyz="0.00000305" izz="0.00000216"/>
+    </inertial>
+    <!-- LOWER LEG LINK VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_lower_leg_left_side.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- LOWER LEG LINK COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_lower_leg_left_side.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <!-- Bullet specific paramters -->
+  </link>
+  <!-- END LOWER LEG LINK -->
+  <!-- KFE: Joint between the upper leg and the lower leg -->
+  <joint name="FL_foot_fixed" type="fixed" dont_collapse="true">
+    <parent link="FL_calf"/>
+    <child link="FL_foot"/>
+    <origin rpy="0 0 0" xyz="0 0.008 -0.16"/>
+    <!-- Limits (usefull?) -->
+    <limit effort="1000" lower="-10" upper="10" velocity="1000"/>
+    <!-- pybullet simulation parameters -->
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  <link name="FL_foot">
+    <!-- FOOT INERTIAL -->
+    <!-- This link is symmetrical left or right -->
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0.00035767"/>
+      <mass value="0.00693606"/>
+      <inertia ixx="0.00000057" ixy="0.0" ixz="0.0" iyy="0.00000084" iyz="0.0" izz="0.00000053"/>
+    </inertial>
+    <!-- FOOT VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_foot.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- FOOT COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_foot.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <!-- Bullet specific paramters -->
+  </link>
+  <!-- END LOWER LEG LINK -->
+  <joint name="FR_hip_joint" type="revolute">
+    <parent link="base"/>
+    <child link="FR_hip"/>
+    <limit effort="1000" lower="-10" upper="10" velocity="1000"/>
+    <!-- joints rotates around the x-axis -->
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0.1946 -0.0875 0"/>
+    <!-- pybullet simulation parameters -->
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  <link name="FR_hip">
+    <!-- TODO: Update inertias. -->
+    <!-- create a dummy shoulder link to join the two joints -->
+    <!-- HAA VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="0.01950 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/solo12_hip_fe_fr.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- HAA LINK COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0.01950 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/solo12_hip_fe_fr.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <inertial>
+      <mass value="0.14853845"/>
+      <!-- HAA body inertia -->
+      <origin rpy="0 0 0" xyz="-0.07870700 -0.01 0."/>
+      <inertia ixx="0.00003024" ixy="-0.00004671" ixz="0.0" iyy="0.00041193" iyz="0.0" izz="0.00041107"/>
+    </inertial>
+  </link>
+  <joint name="FR_thigh_joint" type="revolute">
+    <parent link="FR_hip"/>
+    <child link="FR_thigh"/>
+    <limit effort="1000" lower="-10" upper="10" velocity="1000"/>
+    <!-- joints rotates around the y-axis -->
+    <axis xyz="0 1 0"/>
+    <origin rpy="0 0 0" xyz="0 -0.014 0"/>
+    <!-- pybullet simulation parameters -->
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  <link name="FR_thigh">
+    <!-- Right upper leg inertia -->
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.00001377 -0.01935853 -0.07870700"/>
+      <mass value="0.14853845"/>
+      <inertia ixx="0.00041107" ixy="0.0" ixz="0.0" iyy="0.00041193" iyz="-0.00004671" izz="0.00003024"/>
+    </inertial>
+    <!-- UPPER LEG LINK VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_upper_leg_right_side.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- UPPER LEG LINK COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_upper_leg_right_side.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <!-- Bullet specific paramters -->
+  </link>
+  <!-- END UPPER LEG LINK -->
+  <!-- KFE: Joint between the upper leg and the lower leg -->
+  <joint name="FR_calf_joint" type="revolute">
+    <parent link="FR_thigh"/>
+    <child link="FR_calf"/>
+    <limit effort="1000" lower="-10" upper="10" velocity="1000"/>
+    <!-- joints rotates around the y-axis -->
+    <axis xyz="0 1 0"/>
+    <origin rpy="0 0 0" xyz="0 -0.03745 -0.16"/>
+    <!-- pybullet simulation parameters -->
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  <link name="FR_calf">
+    <!-- Right lower leg inertia -->
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.0 0.00787644 -0.08928215"/>
+      <mass value="0.03070001"/>
+      <inertia ixx="0.00012024" ixy="0.0" ixz="0.0" iyy="0.00012029" iyz="-0.00000305" izz="0.00000216"/>
+    </inertial>
+    <!-- LOWER LEG LINK VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_lower_leg_right_side.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- LOWER LEG LINK COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_lower_leg_right_side.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <!-- Bullet specific paramters -->
+  </link>
+  <!-- END LOWER LEG LINK -->
+  <!-- KFE: Joint between the upper leg and the lower leg -->
+  <joint name="FR_foot_fixed" type="fixed" dont_collapse="true">
+    <parent link="FR_calf"/>
+    <child link="FR_foot"/>
+    <origin rpy="0 0 0" xyz="0 -0.008 -0.16"/>
+    <!-- Limits (usefull?) -->
+    <limit effort="1000" lower="-10" upper="10" velocity="1000"/>
+    <!-- pybullet simulation parameters -->
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  <link name="FR_foot">
+    <!-- FOOT INERTIAL -->
+    <!-- This link is symmetrical left or right -->
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0.00035767"/>
+      <mass value="0.00693606"/>
+      <inertia ixx="0.00000057" ixy="0.0" ixz="0.0" iyy="0.00000084" iyz="0.0" izz="0.00000053"/>
+    </inertial>
+    <!-- FOOT VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_foot.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- FOOT COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_foot.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <!-- Bullet specific paramters -->
+  </link>
+  <!-- END LOWER LEG LINK -->
+  <joint name="RL_hip_joint" type="revolute">
+    <parent link="base"/>
+    <child link="RL_hip"/>
+    <limit effort="1000" lower="-10" upper="10" velocity="1000"/>
+    <!-- joints rotates around the x-axis -->
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="-0.1946 0.0875 0"/>
+    <!-- pybullet simulation parameters -->
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  <link name="RL_hip">
+    <!-- TODO: Update inertias. -->
+    <!-- create a dummy shoulder link to join the two joints -->
+    <!-- HAA VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.01950 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/solo12_hip_fe_hl.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- HAA LINK COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.01950 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/solo12_hip_fe_hl.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <inertial>
+      <mass value="0.14853845"/>
+      <!-- HAA body inertia -->
+      <origin rpy="0 0 0" xyz="0.07870700 0.01 0."/>
+      <inertia ixx="0.00003024" ixy="0.00004671" ixz="0.0" iyy="0.00041193" iyz="0.0" izz="0.00041107"/>
+    </inertial>
+  </link>
+  <joint name="RL_thigh_joint" type="revolute">
+    <parent link="RL_hip"/>
+    <child link="RL_thigh"/>
+    <limit effort="1000" lower="-10" upper="10" velocity="1000"/>
+    <!-- joints rotates around the y-axis -->
+    <axis xyz="0 1 0"/>
+    <origin rpy="0 0 0" xyz="0 0.014 0"/>
+    <!-- pybullet simulation parameters -->
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  <link name="RL_thigh">
+    <!-- Left upper leg inertia -->
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.00001377 0.01935853 -0.07870700"/>
+      <mass value="0.14853845"/>
+      <inertia ixx="0.00041107" ixy="0.0" ixz="0.0" iyy="0.00041193" iyz="0.00004671" izz="0.00003024"/>
+    </inertial>
+    <!-- UPPER LEG LINK VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_upper_leg_left_side.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- UPPER LEG LINK COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_upper_leg_left_side.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <!-- Bullet specific paramters -->
+  </link>
+  <!-- END UPPER LEG LINK -->
+  <!-- KFE: Joint between the upper leg and the lower leg -->
+  <joint name="RL_calf_joint" type="revolute">
+    <parent link="RL_thigh"/>
+    <child link="RL_calf"/>
+    <limit effort="1000" lower="-10" upper="10" velocity="1000"/>
+    <!-- joints rotates around the y-axis -->
+    <axis xyz="0 1 0"/>
+    <origin rpy="0 0 0" xyz="0 0.03745 -0.16"/>
+    <!-- pybullet simulation parameters -->
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  <link name="RL_calf">
+    <!-- Left lower leg inertia -->
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.0 0.00787644 -0.08928215"/>
+      <mass value="0.03070001"/>
+      <inertia ixx="0.00012024" ixy="0.0" ixz="0.0" iyy="0.00012029" iyz="0.00000305" izz="0.00000216"/>
+    </inertial>
+    <!-- LOWER LEG LINK VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_lower_leg_left_side.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- LOWER LEG LINK COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_lower_leg_left_side.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <!-- Bullet specific paramters -->
+  </link>
+  <!-- END LOWER LEG LINK -->
+  <!-- KFE: Joint between the upper leg and the lower leg -->
+  <joint name="RL_foot_fixed" type="fixed" dont_collapse="true">
+    <parent link="RL_calf"/>
+    <child link="RL_foot"/>
+    <origin rpy="0 0 0" xyz="0 0.008 -0.16"/>
+    <!-- Limits (usefull?) -->
+    <limit effort="1000" lower="-10" upper="10" velocity="1000"/>
+    <!-- pybullet simulation parameters -->
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  <link name="RL_foot">
+    <!-- FOOT INERTIAL -->
+    <!-- This link is symmetrical left or right -->
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0.00035767"/>
+      <mass value="0.00693606"/>
+      <inertia ixx="0.00000057" ixy="0.0" ixz="0.0" iyy="0.00000084" iyz="0.0" izz="0.00000053"/>
+    </inertial>
+    <!-- FOOT VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_foot.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- FOOT COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_foot.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <!-- Bullet specific paramters -->
+  </link>
+  <!-- END LOWER LEG LINK -->
+  <joint name="RR_hip_joint" type="revolute">
+    <parent link="base"/>
+    <child link="RR_hip"/>
+    <limit effort="1000" lower="-10" upper="10" velocity="1000"/>
+    <!-- joints rotates around the x-axis -->
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="-0.1946 -0.0875 0"/>
+    <!-- pybullet simulation parameters -->
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  <link name="RR_hip">
+    <!-- TODO: Update inertias. -->
+    <!-- create a dummy shoulder link to join the two joints -->
+    <!-- HAA VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.01950 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/solo12_hip_fe_hr.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- HAA LINK COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.01950 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/solo12_hip_fe_hr.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <inertial>
+      <mass value="0.14853845"/>
+      <!-- HAA body inertia -->
+      <origin rpy="0 0 0" xyz="0.07870700 -0.01 0."/>
+      <inertia ixx="0.00003024" ixy="-0.00004671" ixz="0.0" iyy="0.00041193" iyz="0.0" izz="0.00041107"/>
+    </inertial>
+  </link>
+  <joint name="RR_thigh_joint" type="revolute">
+    <parent link="RR_hip"/>
+    <child link="RR_thigh"/>
+    <limit effort="1000" lower="-10" upper="10" velocity="1000"/>
+    <!-- joints rotates around the y-axis -->
+    <axis xyz="0 1 0"/>
+    <origin rpy="0 0 0" xyz="0 -0.014 0"/>
+    <!-- pybullet simulation parameters -->
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  <link name="RR_thigh">
+    <!-- Right upper leg inertia -->
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.00001377 -0.01935853 -0.07870700"/>
+      <mass value="0.14853845"/>
+      <inertia ixx="0.00041107" ixy="0.0" ixz="0.0" iyy="0.00041193" iyz="-0.00004671" izz="0.00003024"/>
+    </inertial>
+    <!-- UPPER LEG LINK VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_upper_leg_right_side.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- UPPER LEG LINK COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_upper_leg_right_side.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <!-- Bullet specific paramters -->
+  </link>
+  <!-- END UPPER LEG LINK -->
+  <!-- KFE: Joint between the upper leg and the lower leg -->
+  <joint name="RR_calf_joint" type="revolute">
+    <parent link="RR_thigh"/>
+    <child link="RR_calf"/>
+    <limit effort="1000" lower="-10" upper="10" velocity="1000"/>
+    <!-- joints rotates around the y-axis -->
+    <axis xyz="0 1 0"/>
+    <origin rpy="0 0 0" xyz="0 -0.03745 -0.16"/>
+    <!-- pybullet simulation parameters -->
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  <link name="RR_calf">
+    <!-- Right lower leg inertia -->
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.0 0.00787644 -0.08928215"/>
+      <mass value="0.03070001"/>
+      <inertia ixx="0.00012024" ixy="0.0" ixz="0.0" iyy="0.00012029" iyz="-0.00000305" izz="0.00000216"/>
+    </inertial>
+    <!-- LOWER LEG LINK VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_lower_leg_right_side.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- LOWER LEG LINK COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_lower_leg_right_side.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <!-- Bullet specific paramters -->
+  </link>
+  <!-- END LOWER LEG LINK -->
+  <!-- KFE: Joint between the upper leg and the lower leg -->
+  <joint name="RR_foot_fixed" type="fixed" dont_collapse="true">
+    <parent link="RR_calf"/>
+    <child link="RR_foot"/>
+    <origin rpy="0 0 0" xyz="0 -0.008 -0.16"/>
+    <!-- Limits (usefull?) -->
+    <limit effort="1000" lower="-10" upper="10" velocity="1000"/>
+    <!-- pybullet simulation parameters -->
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  <link name="RR_foot">
+    <!-- FOOT INERTIAL -->
+    <!-- This link is symmetrical left or right -->
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0.00035767"/>
+      <mass value="0.00693606"/>
+      <inertia ixx="0.00000057" ixy="0.0" ixz="0.0" iyy="0.00000084" iyz="0.0" izz="0.00000053"/>
+    </inertial>
+    <!-- FOOT VISUAL -->
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_foot.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <!-- FOOT COLLISION -->
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/with_foot/solo_foot.stl"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </collision>
+    <!-- Bullet specific paramters -->
+  </link>
+  <!-- END LOWER LEG LINK -->
+</robot>
