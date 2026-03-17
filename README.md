@@ -4,7 +4,6 @@
   <a href="https://arclab-hku.github.io/MGDP/">Project Website</a>
   | <a href="https://youtu.be/yOGQvbQMUKE">Youtube Video</a>
 </h3>
-
 <div align="center">
   <video width="80%" controls>
     <source src="static/videos/MGDP_1.mp4" type="video/mp4">
@@ -67,4 +66,3 @@ We leverage NVIDIA Warp to enable efficient parallel computation of depth images
    cd legged_gym/scripts
    python play_terrain.py
    ```
-
