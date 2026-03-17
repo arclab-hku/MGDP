@@ -95,8 +95,8 @@ class Legged_camera(LeggedRobot):
             image += self.cfg.camera.depth_nosie * 2 * (torch.rand(1) - 0.5)[0]
             image = torch.clamp(-image, self.cfg.camera.near_clip, self.cfg.camera.far_clip)
 
-        if self.cfg.camera.hight_point_type == "resize":   # 调用 Resize 转换
-            resize_transform = transforms.Resize((self.resized[1], self.resized[0]), interpolation=torchvision.transforms.InterpolationMode.BICUBIC)  # 定义 Resize 转换，目标尺寸为 [16, 16]
+        if self.cfg.camera.hight_point_type == "resize":
+            resize_transform = transforms.Resize((self.resized[1], self.resized[0]), interpolation=torchvision.transforms.InterpolationMode.BICUBIC)
             image = resize_transform(image)
         elif self.cfg.camera.hight_point_type == "nearest":
             image = F.interpolate(image.unsqueeze(0), size=self.resized, mode='nearest')
@@ -111,13 +111,13 @@ class Legged_camera(LeggedRobot):
             image = F.interpolate(image.unsqueeze(0), size=self.resized, mode='bicubic', align_corners=False)
             image = image.squeeze(0)
         elif self.cfg.camera.hight_point_type == "min_pooling":
-            target_size = (self.resized[0], self.resized[1])  # 根据目标尺寸计算池化操作的窗口大小和步幅
+            target_size = (self.resized[0], self.resized[1])
             kernel_size = (image.shape[1] // target_size[0], image.shape[2]// target_size[1])
             stride = kernel_size
             image = F.max_pool2d(-image, kernel_size=kernel_size, stride=stride)
             image = -image.squeeze(0)
         elif self.cfg.camera.hight_point_type == "average_pooling":
-            target_size = (self.resized[0], self.resized[1])  # 根据目标尺寸计算池化操作的窗口大小和步幅
+            target_size = (self.resized[0], self.resized[1])
             kernel_size = (image.shape[1] // target_size[0], image.shape[2]// target_size[1])
             stride = kernel_size
             image = F.max_pool2d(image, kernel_size=kernel_size, stride=stride)

@@ -1,5 +1,10 @@
-from legged_gym.scripts.play_stage1 import *
 import os
+
+DOG_NAMES = [ "go2"]
+
+os.environ["DOG_NAMES"] = ",".join(DOG_NAMES)
+
+from legged_gym.scripts.play_stage1 import *
 
 CUDA_DEVICE_ID = 0
 

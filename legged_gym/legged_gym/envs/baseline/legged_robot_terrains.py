@@ -310,12 +310,12 @@ class Legged_terrains(LeggedRobot):
             prev_obs_buf =  self.obs_history_buf[:, 45:]
             # concatenate to get full history
             self.obs_history_buf = torch.cat([prev_obs_buf, self.obs_buf], dim=1)
-            # print('obs_buf', self.obs_buf[1])  # 应该是 [10, 45]
-            # print('his', self.obs_history_buf[1, :])  # 应该是 [10, 180]
+            # print('obs_buf', self.obs_buf[1])  # expected shape: [num_envs, 45]
+            # print('his', self.obs_history_buf[1, :])  # expected shape: [num_envs, 45 * history_len]
             # print()
             at_reset_env_ids = self.reset_buf.nonzero(as_tuple=False).squeeze(-1)
             if len(at_reset_env_ids) != 0:
-                self.obs_history_buf[at_reset_env_ids, :] = self.obs_buf[at_reset_env_ids].unsqueeze(1).repeat(1, self.cfg.env.num_histroy_obs, 1) .view(len(at_reset_env_ids),-1)  # 形状变为 [N, 45 * num_repeats]
+                self.obs_history_buf[at_reset_env_ids, :] = self.obs_buf[at_reset_env_ids].unsqueeze(1).repeat(1, self.cfg.env.num_histroy_obs, 1) .view(len(at_reset_env_ids),-1)
 
     def _resample_commands(self, env_ids):
         """ Randommly select commands of some environments
@@ -389,21 +389,19 @@ class Legged_terrains(LeggedRobot):
         return grid_x, grid_y
 
     def draw_sparse_heatmap(self, pred_height, true_height, cell_size=50, gap=20):
-        """
-        离散显示每个高程点（放大球体尺寸，优化显示效果）
-        """
-        # 获取全局最大最小值，统一颜色映射范围
+        
+        
         all_values = np.concatenate([pred_height.flatten(), true_height.flatten()])
         vmin, vmax = -1, 1
         if vmax - vmin < 1e-8:
             vmin, vmax = 0, 1
 
-        # 画布尺寸计算
+        
         canvas_height = 17 * cell_size
         canvas_width = 2 * 11 * cell_size + gap
-        canvas = np.ones((canvas_height, canvas_width, 3), dtype=np.uint8) * 255  # 白色背景
+        canvas = np.ones((canvas_height, canvas_width, 3), dtype=np.uint8) * 255
 
-        # 绘制网格线（不变）
+        
         for i in range(17 + 1):
             y = i * cell_size
             cv2.line(canvas, (0, y), (canvas_width, y), (200, 200, 200), 1)
@@ -416,10 +414,8 @@ class Legged_terrains(LeggedRobot):
         cv2.line(canvas, (11 * cell_size, 0), (11 * cell_size, canvas_height), (150, 150, 150), 2)
         cv2.line(canvas, (11 * cell_size + gap, 0), (11 * cell_size + gap, canvas_height), (150, 150, 150), 2)
 
-        # 绘制每个点（重点修改球体大小）
         for i in range(17):
             for j in range(11):
-                # 预测点（左列）
                 pred_val = pred_height[i, j]
                 pred_norm = (pred_val - vmin) / (vmax - vmin)
                 pred_color = (
@@ -427,18 +423,11 @@ class Legged_terrains(LeggedRobot):
                     int(255 * min(2 * pred_norm, 2 - 2 * pred_norm)),
                     int(255 * pred_norm)
                 )
-                # 预测点位置
                 pred_x = j * cell_size + cell_size // 2
                 pred_y = i * cell_size + cell_size // 2
-                # 增大球体半径（从cell_size//4 改为 cell_size//3，约为网格的1/3）
                 pred_radius = cell_size // 3
-                cv2.circle(canvas, (pred_x, pred_y), pred_radius, pred_color, -1)  # 填充圆
-                # 调整文字位置（避免被球体遮挡）
-                # cv2.putText(canvas, f"{pred_val:.2f}",
-                #             (pred_x - cell_size // 3, pred_y + cell_size // 2 - 5),  # 下移文字
-                #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)  # 稍大字体
-
-                # 真实点（右列）
+                cv2.circle(canvas, (pred_x, pred_y), pred_radius, pred_color, -1) 
+        
                 true_val = true_height[i, j]
                 true_norm = (true_val - vmin) / (vmax - vmin)
                 true_color = (
@@ -446,18 +435,18 @@ class Legged_terrains(LeggedRobot):
                     int(255 * min(2 * true_norm, 2 - 2 * true_norm)),
                     int(255 * true_norm)
                 )
-                # 真实点位置
+            
                 true_x = 11 * cell_size + gap + j * cell_size + cell_size // 2
                 true_y = i * cell_size + cell_size // 2
-                # 同样增大半径
+                
                 true_radius = cell_size // 3
                 cv2.circle(canvas, (true_x, true_y), true_radius, true_color, -1)
-                # # 调整文字位置
+                
                 # cv2.putText(canvas, f"{true_val:.2f}",
                 #             (true_x - cell_size // 3, true_y + cell_size // 2 - 5),
                 #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
 
-        # # 添加标题（不变）
+        
         # cv2.putText(canvas, "Predicted Heights",
         #             (11 * cell_size // 2 - 80, 20),
         #             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
@@ -468,21 +457,19 @@ class Legged_terrains(LeggedRobot):
         return canvas
 
     def draw_sparse_heatmap1(self, pred_height, true_height, cell_size=60, gap=20):
-        """
-        颜色条放在主图左侧，高度缩短且文字清晰
-        """
-        # 1. 计算颜色映射范围
+        
+        
         all_values = np.concatenate([pred_height.flatten(), true_height.flatten()])
         vmin, vmax = -1, 1
         if vmax - vmin < 1e-8:
             vmin, vmax = 0, 1
 
-        # 2. 生成主图（高程点对比）
-        canvas_height = 17 * cell_size  # 主图高度
+        
+        canvas_height = 17 * cell_size
         canvas_width = 2 * 11 * cell_size + gap
         main_img = np.ones((canvas_height, canvas_width, 3), dtype=np.uint8) * 255
 
-        # 绘制主图网格线
+        
         for i in range(17 + 1):
             y = i * cell_size
             cv2.line(main_img, (0, y), (canvas_width, y), (200, 200, 200), 1)
@@ -495,10 +482,10 @@ class Legged_terrains(LeggedRobot):
         cv2.line(main_img, (11 * cell_size, 0), (11 * cell_size, canvas_height), (150, 150, 150), 2)
         cv2.line(main_img, (11 * cell_size + gap, 0), (11 * cell_size + gap, canvas_height), (150, 150, 150), 2)
 
-        # 绘制高程点
+        
         for i in range(17):
             for j in range(11):
-                # 预测点
+                
                 pred_val = pred_height[i, j]
                 pred_norm = (pred_val - vmin) / (vmax - vmin)
                 pred_color = (int(255 * (1 - pred_norm)), int(255 * min(2 * pred_norm, 2 - 2 * pred_norm)),
@@ -507,7 +494,7 @@ class Legged_terrains(LeggedRobot):
                 pred_y = i * cell_size + cell_size // 2
                 cv2.circle(main_img, (pred_x, pred_y), cell_size // 3, pred_color, -1)
 
-                # 真实点
+                
                 true_val = true_height[i, j]
                 true_norm = (true_val - vmin) / (vmax - vmin)
                 true_color = (int(255 * (1 - true_norm)), int(255 * min(2 * true_norm, 2 - 2 * true_norm)),
@@ -516,12 +503,12 @@ class Legged_terrains(LeggedRobot):
                 true_y = i * cell_size + cell_size // 2
                 cv2.circle(main_img, (true_x, true_y), cell_size // 3, true_color, -1)
 
-        # 3. 生成颜色条（高度缩短，放在左侧）
-        bar_height = canvas_height -2  # 颜色条高度 = 主图高度的一半
+        
+        bar_height = canvas_height -2
         bar_width = 90
         colorbar = np.ones((bar_height, bar_width, 3), dtype=np.uint8) * 255
 
-        # 绘制颜色条渐变
+        
         for i in range(bar_height):
             norm = i / (bar_height - 1)
             val = vmax - norm * (vmax - vmin)
@@ -531,25 +518,25 @@ class Legged_terrains(LeggedRobot):
             b = int(255 * val_norm)
             cv2.line(colorbar, (0, i), (bar_width, i), (b, g, r), 1)
 
-        # 绘制刻度和文字（左侧布局，调整位置）
+        
         tick_positions = [0, bar_height // 4, bar_height // 2, 3 * bar_height // 4, bar_height - 1]
         tick_values = [vmax, 0.75, 0.45, 0.15, vmin]
         for y, val in zip(tick_positions, tick_values):
-            cv2.line(colorbar, (0, y), (8, y), (0, 0, 0), 3)  # 刻度线左移
+            cv2.line(colorbar, (0, y), (8, y), (0, 0, 0), 3)
 
             text = f"{val:.2f}"
-            if y == 0:  # 顶部(1.00)
+            if y == 0:
                 cv2.putText(
                     colorbar,
                     text,
-                    (20, y + 20),  # 右移文字，避免被刻度线遮挡
+                    (20, y + 20),
                     cv2.FONT_HERSHEY_TRIPLEX,
                     0.7,
                     (0, 0, 0),
                     1,
                     cv2.LINE_AA
                 )
-            elif y == bar_height - 1:  # 底部(-1.00)
+            elif y == bar_height - 1:
                 cv2.putText(
                     colorbar,
                     text,
@@ -560,7 +547,7 @@ class Legged_terrains(LeggedRobot):
                     1,
                     cv2.LINE_AA
                 )
-            else:  # 中间刻度
+            else:
                 cv2.putText(
                     colorbar,
                     text,
@@ -572,12 +559,12 @@ class Legged_terrains(LeggedRobot):
                     cv2.LINE_AA
                 )
 
-        # 4. 拼接（颜色条在左，主图在右，垂直居中）
+        
         colorbar_container = np.ones((canvas_height, bar_width, 3), dtype=np.uint8) * 255
         offset_y = (canvas_height - bar_height) // 2
         colorbar_container[offset_y:offset_y + bar_height, :, :] = colorbar
 
-        combined_img = np.hstack((colorbar_container, main_img))  # 左-右拼接
+        combined_img = np.hstack((colorbar_container, main_img))
         return combined_img
 
     def _init_FL_foot_height_points(self):

@@ -1,6 +1,13 @@
+import os
+
+# Available dog names: a1, aliengo, anymal_c, b1, go1, go2, lite3, mini_cheetah, mini_point, solo, spot
+DOG_NAMES = ["aliengo", "anymal_c", "b1", "go1", "lite3", "mini_cheetah", "mini_point",  "spot"]
+# DOG_NAMES = [ "go2"]
+
+os.environ["DOG_NAMES"] = ",".join(DOG_NAMES)
+
 import isaacgym
 from legged_gym.scripts.train import *
-import os
 
 CUDA_DEVICE_ID = 0
 
@@ -11,8 +18,8 @@ print("parent_dir2:", parent_dir)
 
 args = get_args()
 args.task = 'random_dog_stage2'
-args.num_envs = 4
-args.headless = True
+args.num_envs = 64
+args.headless = False
 cuda = f"cuda:{CUDA_DEVICE_ID}"
 args.rl_device = cuda
 args.render_device = cuda

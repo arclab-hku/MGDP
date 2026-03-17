@@ -133,10 +133,10 @@ def half_sloped_terrain(terrain, level_index,   platform_size=2.):
     xs = np.arange(slope_start, slope_end)
     max_height_int = height2width_ratio*(slope_end - slope_start)
     heights = (height2width_ratio * (xs - slope_start)).clip(max=max_height_int).astype(np.int16)
-    # 假设 heights 是一个一维数组
+    
     height_size = len(heights)
 
-    # 从最后一个元素开始的索引
+    
     reversed_index = height_size - 1
 
     for i in range(slope_start, slope_end):
@@ -200,7 +200,7 @@ def parkour_step_terrain(terrain, num_stones=8, x_range=[0.2, 0.4], difficulty=0
         hurdel_height_max = hurdel_height_mix + 0.01
 
     # print('difficulty', difficulty)
-    # 对平台尺寸、x坐标范围、台阶高度进行相应的缩放调整
+    
     platform_size = int(platform_size / terrain.horizontal_scale)
     dis_x_min = round((x_range[0]) / terrain.horizontal_scale)
     dis_x_max = round((x_range[1]) / terrain.horizontal_scale)
@@ -209,10 +209,10 @@ def parkour_step_terrain(terrain, num_stones=8, x_range=[0.2, 0.4], difficulty=0
     hurdle_height_min = round(hurdel_height_mix / terrain.vertical_scale)
     step_height = np.random.randint(hurdle_height_min, hurdle_height_max)
     # print('hurdle', step_height, difficulty, hurdle_height_min, hurdle_height_max)
-    # 计算平台相关的x坐标范围
+    
     max_x = int((terrain.width + platform_size) )
 
-    # 设定y坐标范围
+    
     start_y = 2
     end_y = int(terrain.length) - 2
 
@@ -233,35 +233,23 @@ def parkour_step_terrain(terrain, num_stones=8, x_range=[0.2, 0.4], difficulty=0
 
 
 def parkour_step_terrain1(terrain, num_stones=8, x_range=[0.2, 0.4], step_height=0.2, platform_size=1.5):
-    """
-    在地形上生成跑酷台阶相关的地形特征。
+    
 
-    Args:
-        terrain: 表示地形的对象，需包含width、length、horizontal_scale、vertical_scale等属性。
-        num_stones: 要生成的石头数量，默认为8。
-        x_range: x坐标的取值范围，默认为[0.2, 0.4]，需根据terrain.horizontal_scale进行调整。
-        step_height: 每个台阶的高度，默认为0.2，需根据terrain.vertical_scale进行调整。
-        platform_size: 平台的尺寸，默认为1.5，需根据terrain.horizontal_scale进行调整。
-
-    Returns:
-        修改后的地形对象terrain。
-    """
-
-    # 对平台尺寸、x坐标范围、台阶高度进行相应的缩放调整
+    
     platform_size = int(platform_size / terrain.horizontal_scale)
     dis_x_min = round((x_range[0]) / terrain.horizontal_scale)
     dis_x_max = round((x_range[1]) / terrain.horizontal_scale)
     step_height = round(step_height / terrain.vertical_scale)
 
-    # 计算平台相关的x坐标范围
+    
     x1 = int((terrain.width - platform_size) / 2)
     x2 = int((terrain.width + platform_size) / 2)
 
-    # 设定y坐标范围
+    
     start_y = 2
     end_y = int(terrain.length) - 2
 
-    # 计算中间石头的序号（用于后续判断）
+    
     middle_num = int(num_stones // 2)
 
     new_stair_height = 0
@@ -293,7 +281,7 @@ def parkour_step_terrain1(terrain, num_stones=8, x_range=[0.2, 0.4], step_height
 
 def stepping_breams_terrain(terrain, stone_size, stone_distance, max_height, platform_size=1., depth=1):
 
-    # 将参数转换为离散单位
+    
     bream_length = int(stone_size / terrain.horizontal_scale)
     stone_distance = int(stone_distance / terrain.horizontal_scale)
     stone_distance = np.clip(stone_distance, 1, 5)
@@ -302,17 +290,17 @@ def stepping_breams_terrain(terrain, stone_size, stone_distance, max_height, pla
     max_height = np.clip(max_height, 0, 30)
     height_range = np.arange(0, max_height, step=4)
 
-    # 计算平台在地形中间的y坐标
+    
     platform_y = terrain.length // 2 - platform_size // 2
     terrain.height_field_raw[:, :] = int(-depth / terrain.vertical_scale)
     min_bream_width = 15
     max_bream_width = 30
 
-    # 创建平台
+    
     x1 = terrain.width // 2 - platform_size // 2
     x2 = terrain.width // 2 + platform_size // 2
 
-    # 生成前排石头
+    
     start_x_front = terrain.width // 2 - platform_size // 2 -1
     while start_x_front >= 0:
         bream_width = random.randint(min_bream_width, max_bream_width)
@@ -321,7 +309,7 @@ def stepping_breams_terrain(terrain, stone_size, stone_distance, max_height, pla
         terrain.height_field_raw[stop_x_front: start_x_front, row1_y: row1_y + bream_width] = np.random.choice(height_range)
         start_x_front -= bream_length + stone_distance
 
-    # 生成后排石头
+    
     start_x_back = terrain.width // 2 + platform_size // 2 +1
     while start_x_back < terrain.width:
         bream_width = random.randint(min_bream_width, max_bream_width)

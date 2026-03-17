@@ -12,10 +12,10 @@ from .random_dog.random_dog import Randomdog
 from .random_dog.random_dog_config_stage1 import RandomCfgStage1, RandomCfgPPOStage1
 from .random_dog.random_dog_config_stage2 import RandomCfgStage2, RandomCfgPPOStage2
 
-# 第一阶段：采集数据 + 训练 world model（mix 地形等）
+# Stage 1: data collection + world model training (mix terrains, etc.)
 task_registry.register("random_dog_stage1", Randomdog, RandomCfgStage1(), RandomCfgPPOStage1())
 
-# 第二阶段：与论文对齐（gap_parkour、reward 等），可加载 stage1 的 WM/策略继续训
+# Stage 2: align with paper setup (gap_parkour, rewards, etc.); can resume from stage1 WM/policy
 task_registry.register("random_dog_stage2", Randomdog, RandomCfgStage2(), RandomCfgPPOStage2())
 
 

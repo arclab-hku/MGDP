@@ -88,9 +88,9 @@ class MGDPPolicyRunner:
         self.tot_time = 0
         self.current_learning_iteration_init = 0
 
-        self.best_wm_visual_mse_loss = float('inf')  # 初始值设为无穷大
-        self.best_wm_combined_loss = float('inf')    # 深度+高程联合损失，用于保存 wm_best
-        self.best_avg_reward = -float('inf')  # 初始化为负无穷
+        self.best_wm_visual_mse_loss = float('inf') 
+        self.best_wm_combined_loss = float('inf')    
+        self.best_avg_reward = -float('inf') 
 
         _ = self.env.reset()
 
@@ -100,7 +100,7 @@ class MGDPPolicyRunner:
             self.env.episode_length_buf = torch.randint_like(self.env.episode_length_buf,
                                                              high=int(self.env.max_episode_length))
         obs_dict = self.env.get_observations()
-        self.alg.actor_critic.train()  # switch to train mode (for dropout for example)
+        self.alg.actor_critic.train() 
 
         ep_infos = []
         rewbuffer = deque(maxlen=100)
@@ -112,9 +112,7 @@ class MGDPPolicyRunner:
         start_iter = self.current_learning_iteration_init
         tot_iter = start_iter + num_learning_iterations
 
-        # actor_state_dict = self.env.cnn_encoder.state_dict()
-        # for name, param in actor_state_dict.items():
-        #     print(f"参数名称: {name}")
+
 
         for it in range(start_iter, tot_iter):
             start = time.time()
@@ -167,7 +165,7 @@ class MGDPPolicyRunner:
             mean_value_loss, mean_surrogate_loss, mean_vel_loss, mean_feet_loss, mean_cnn_loss = self.alg.update()
 
 
-            # 计算所有损失的“当前迭代多步平均值”（用于日志）
+ 
             wm_visual_mse_loss = current_iter_wm_visual_mse / self.num_steps_per_env
             wm_height_mse_loss = current_iter_wm_height_mse / self.num_steps_per_env
             wm_height_visual_mse_loss = current_iter_wm_height_visual_mse / self.num_steps_per_env
@@ -176,9 +174,7 @@ class MGDPPolicyRunner:
             wm_height_l1_loss = current_iter_wm_height_l1 / self.num_steps_per_env
             wm_loss= current_iter_total  / self.num_steps_per_env
 
-            # print('policy',mean_value_loss, self.env.total_wm_loss,
-            #       self.env.visual_loss, self.env.height_loss, self.env.contrastive_loss)
-
+  
             stop = time.time()
             learn_time = stop - start
             self.current_learning_iteration = it
@@ -190,27 +186,25 @@ class MGDPPolicyRunner:
                     self.save(os.path.join(self.nn_dir, 'model_{}.pt'.format(it)))
                     self.save(os.path.join(self.nn_dir, 'last.pt'))
 
-                    # 新增：根据奖励判断是否保存最优策略模型（奖励越大越好）
-                    if len(rewbuffer) > 0:  # 确保有足够的episode数据
-                        current_avg_reward = statistics.mean(rewbuffer)  # 最近100个episode的平均奖励
+           
+                    if len(rewbuffer) > 0: 
+                        current_avg_reward = statistics.mean(rewbuffer)  
                         if current_avg_reward > self.best_avg_reward:
-                            self.best_avg_reward = current_avg_reward  # 更新最优奖励
-                            self.save(os.path.join(self.nn_dir, 'model_best.pt'))  # 保存最优策略模型
-                            print(f"更新最优策略模型！迭代 {it}，平均奖励: {current_avg_reward:.2f}")
+                            self.best_avg_reward = current_avg_reward 
+                            self.save(os.path.join(self.nn_dir, 'model_best.pt')) 
 
                     self.save_world_model(os.path.join(self.nn_dir, 'wm_{}.pt'.format(it)))
                     self.save_world_model(os.path.join(self.nn_dir, 'wm_last.pt'))
 
-                    # 最优 WM：按“深度 MSE + 高程 MSE”联合损失更新，使深度和高程都尽量好
+                 
                     if getattr(self.env, 'use_world_model', False):
                         w_vis = getattr(self.env.cfg.camera, 'wm_best_visual_weight', 0.5)
                         w_h = getattr(self.env.cfg.camera, 'wm_best_height_weight', 0.5)
                         current_combined = w_vis * wm_visual_mse_loss + w_h * wm_height_mse_loss
                         if current_combined < self.best_wm_combined_loss:
                             self.best_wm_combined_loss = current_combined
-                            self.best_wm_visual_mse_loss = wm_visual_mse_loss  # 保持兼容
+                            self.best_wm_visual_mse_loss = wm_visual_mse_loss 
                             self.save_world_model(os.path.join(self.nn_dir, 'wm_best.pt'))
-                            print(f"更新最优世界模型！迭代 {it}，视觉MSE: {wm_visual_mse_loss:.6f}，高程MSE: {wm_height_mse_loss:.6f}，联合: {current_combined:.6f}")
             ep_infos.clear()
 
         if self.nn_dir is not None:
@@ -264,7 +258,6 @@ class MGDPPolicyRunner:
                 self.writer.add_scalar('Train/mean_episode_length/time', statistics.mean(locs['lenbuffer']), self.tot_time)
 
         str = f" \033[1m Learning iteration {locs['it']}/{self.current_learning_iteration_init + locs['num_learning_iterations']} \033[0m "
-        # str = f" \033[1m Learning iteration {locs['it']}/{locs['tot_iter']} \033[0m "
 
         if len(locs['rewbuffer']) > 0:
             log_string = (f"""{'#' * width}\n"""
@@ -338,20 +331,14 @@ class MGDPPolicyRunner:
         os.makedirs(path, exist_ok=True)
         onnx_file_path = os.path.join(path, name)
 
-        # self.alg.actor_critic.eval()
-        # # 创建包装模型
-        # actor_wrapper = ActorWrapper(self.alg.actor_critic)
-        # actor_wrapper.to(self.device)
-        # actor_wrapper.eval()
 
-        # 保存原始设备并创建模型深拷贝
+
         model_copy = copy.deepcopy(self.alg.actor_critic).to(self.device)
         actor_wrapper = ActorWrapper(model_copy)
         actor_wrapper.eval()
 
 
-        # print('actor_wrapper', actor_wrapper)
-        # 准备输入示例 - 根据实际情况调整形状
+
         batch_size = self.env.num_envs
         obs = torch.randn(batch_size, self.env.num_obs, device=self.device)
         camera_dim = self.encoder_cfg.get('camera_dim', self.encoder_cfg['CNNModule_info'].get('camera_dim', [16, 16]))
@@ -366,11 +353,9 @@ class MGDPPolicyRunner:
 
 
 
-        # 定义输入输出名称
         input_names = ["observation", "image_buffer", "proprioceptive_history", "hidden_states"]
         output_names = ["action", "hidden_states_out"]
 
-        # 导出模型
         torch.onnx.export(
             actor_wrapper,
             (obs, image_buf, proprio_hist, hidden_states),
@@ -380,7 +365,7 @@ class MGDPPolicyRunner:
             # verbose=True,
             input_names=input_names,
             output_names=output_names,
-            opset_version=16,  # 添加 opset_version 参数
+            opset_version=16, 
             dynamic_axes={
                 'observation': {0: 'batch_size'},
                 'image_buffer': {0: 'batch_size'},
@@ -389,10 +374,6 @@ class MGDPPolicyRunner:
                 'action': {0: 'batch_size'}
             }
         )
-
-        print(f"模型已导出为 ONNX 格式: {onnx_file_path}")
-        print(f"输入名称: {input_names}")
-        print(f"输出名称: {output_names}")
 
     def load(self, path, load_optimizer=True):
         loaded_dict = torch.load(path, map_location=self.device)
@@ -407,11 +388,10 @@ class MGDPPolicyRunner:
             import onnx
             cprint('Exporting policy to onnx module(C++)', 'red', attrs=['bold'])
             onnx_save_path = os.path.join(os.path.dirname(os.path.dirname(path)), 'onnx_s1')
-            os.makedirs(onnx_save_path, exist_ok=True)  # 确保保存目录存在
+            os.makedirs(onnx_save_path, exist_ok=True) 
 
             from rl.utils.utils import (export_policy_as_onnx, export_cnn_as_onnx,
                                         export_cnn_decoder_as_onnx, export_map_decoder_as_onnx)
-            # 1. 导出 actor 和 mlp_encoder（原有逻辑不变）
             export_policy_as_onnx(self.alg.actor_critic.actor,
                                   self.alg.actor_critic.num_actor_input,
                                   onnx_save_path,
@@ -427,7 +407,7 @@ class MGDPPolicyRunner:
                                   output_names=["est_feature"],
                                   )
 
-            cnn_network = self.env.cnn_encoder  # 1. network: cnn模型
+            cnn_network = self.env.cnn_encoder 
             input_shape = (1, 2, 16, 16)
             export_cnn_as_onnx(cnn_network,
                                   input_shape,
@@ -437,20 +417,17 @@ class MGDPPolicyRunner:
                                    output_names=["imgae_feature"],
                                )
 
-            # 2. 关键：按 export_cnn_as_onnx 定义顺序传参
-            # 准备参数（严格匹配函数要求的顺序）
+     
 
             batch_size = 1
-            input_channels = self.env.image_buf.shape[1]  # 从图像缓冲区获取实际通道数（如2）
-            img_height = self.env.image_buf.shape[2]  # 实际图像高度（如64）
-            img_width = self.env.image_buf.shape[3]  # 实际图像宽度（如64）
-            cnn_input_size = (batch_size, input_channels, img_height, img_width)  # 2. input_size: 输入形状
-            save_path = onnx_save_path  # 3. path: 保存目录
-            cnn_file_name = 'cnn_encoder.onnx'  # 4. name: 输出文件名
-            cnn_input_names = ["image_input"]  # 5. input_names: 输入节点名
-            cnn_output_names = ["visual_token"]  # 6. output_names: 输出节点名
-
-            # 调用函数（无关键字，按顺序传参）
+            input_channels = self.env.image_buf.shape[1]  
+            img_height = self.env.image_buf.shape[2] 
+            img_width = self.env.image_buf.shape[3]  
+            cnn_input_size = (batch_size, input_channels, img_height, img_width)  
+            save_path = onnx_save_path  
+            cnn_file_name = 'cnn_encoder.onnx' 
+            cnn_input_names = ["image_input"]  
+            cnn_output_names = ["visual_token"] 
             export_cnn_as_onnx(
                 cnn_network,
                 cnn_input_size,
@@ -463,15 +440,13 @@ class MGDPPolicyRunner:
             self.env.cnn_encoder = self.env.cnn_encoder.to(self.device)
             cprint(f"Successfully exported cnn_encoder to {os.path.join(save_path, cnn_file_name)}", 'green')
 
-            # 2. 导出 ImageDecoder（仅传6个参数，匹配函数定义）
-            decoder_network = self.env.cnn_decoder  # 1. network
-            decoder_input_size = (1, 64)  # 2. input_size（64维，匹配Encoder输出）
-            decoder_save_path = onnx_save_path  # 3. path
-            decoder_file_name = 'cnn_decoder.onnx'  # 4. name
-            decoder_input_names = ["visual_token"]  # 5. input_names
-            decoder_output_names = ["recon_image"]  # 6. output_names
+            decoder_network = self.env.cnn_decoder  
+            decoder_input_size = (1, 64)  
+            decoder_save_path = onnx_save_path  
+            decoder_file_name = 'cnn_decoder.onnx'  
+            decoder_input_names = ["visual_token"] 
+            decoder_output_names = ["recon_image"] 
 
-            # 调用函数（仅6个参数，删除 decoder_skips_shape 和 decoder_target_size）
             export_cnn_decoder_as_onnx(
                 decoder_network,
                 decoder_input_size,
@@ -485,21 +460,17 @@ class MGDPPolicyRunner:
             cprint(f"Successfully exported cnn_decoder to {os.path.join(decoder_save_path, decoder_file_name)}",
                    'green')
 
-            # 3. 导出 MapEncoder/MapDecoder（仅当启用时）
             if getattr(self.env, 'use_map_decoder', False) and hasattr(self.env, 'map_encoder'):
-                # 准备参数（按顺序传参，与 ImageEncoder 逻辑一致）
-                map_encoder_network = self.env.map_encoder  # 1. MapEncoder模型
+                map_encoder_network = self.env.map_encoder 
                 batch_size = 1
-                map_input_channels = 1  # 固定：高程图1通道
-                map_input_height = 17  # 固定：高程图高度
-                map_input_width = 11  # 固定：高程图宽度
-                # 输入形状：(batch, 通道, 高, 宽) → 匹配 MapEncoder 输入
+                map_input_channels = 1 
+                map_input_height = 17 
+                map_input_width = 11 
                 map_encoder_input_size = (batch_size, map_input_channels, map_input_height, map_input_width)
-                map_encoder_file_name = 'map_encoder.onnx'  # 4. 文件名
-                map_encoder_input_names = ["height_map_input"]  # 5. 输入节点名（高程图输入）
-                map_encoder_output_names = ["map_token"]  # 6. 输出节点名（64维特征）
+                map_encoder_file_name = 'map_encoder.onnx' 
+                map_encoder_input_names = ["height_map_input"] 
+                map_encoder_output_names = ["map_token"] 
 
-                # 调用函数（无关键字，按顺序传参）
                 export_cnn_as_onnx(
                     map_encoder_network,
                     map_encoder_input_size,
@@ -512,15 +483,13 @@ class MGDPPolicyRunner:
                 self.env.map_encoder = self.env.map_encoder.to(self.device)
                 cprint(f"Successfully exported map_encoder to {os.path.join(onnx_save_path, map_encoder_file_name)}", 'green')
 
-                # 1. 准备 MapDecoder 导出参数（完全对齐 cnn_decoder）
-                map_decoder_network = self.env.map_decoder  # 1. network：你实例化后的 MapDecoder（input_dims=32）
-                map_decoder_input_size = (1, 32)  # 2. input_size：(批量1, 32维)，和实际输入一致
-                map_decoder_save_path = onnx_save_path  # 3. path：和 cnn_decoder 同目录
-                map_decoder_file_name = 'map_decoder.onnx'  # 4. name：文件名
-                map_decoder_input_names = ["map_token"]  # 5. input_names：输入节点名
-                map_decoder_output_names = ["recon_height_map"]  # 6. output_names：输出节点名
+                map_decoder_network = self.env.map_decoder  
+                map_decoder_input_size = (1, 32)  
+                map_decoder_save_path = onnx_save_path  
+                map_decoder_file_name = 'map_decoder.onnx' 
+                map_decoder_input_names = ["map_token"] 
+                map_decoder_output_names = ["recon_height_map"] 
 
-                # 2. 调用导出函数（6个参数，顺序和 cnn_decoder 完全一致）
                 export_map_decoder_as_onnx(
                     map_decoder_network,
                     map_decoder_input_size,
@@ -530,13 +499,12 @@ class MGDPPolicyRunner:
                     map_decoder_output_names
                 )
 
-                # 3. 恢复设备（和 cnn_decoder 处理一致）
                 self.env.map_decoder = self.env.map_decoder.to(self.device)
                 cprint(f"Successfully exported map_decoder to {os.path.join(map_decoder_save_path, map_decoder_file_name)}",
                        'green')
 
     def get_inference_policy(self, device=None):
-        self.alg.actor_critic.eval()  # switch to evaluation mode (dropout for example)
+        self.alg.actor_critic.eval() 
         if device is not None:
             self.alg.actor_critic.to(device)
         return self.alg.actor_critic.act_inference, self.alg.actor_critic.evaluate

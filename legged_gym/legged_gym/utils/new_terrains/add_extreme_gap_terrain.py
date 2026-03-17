@@ -214,8 +214,8 @@ def trimesh_terrain(terrain, choice, difficulty, slope,
 
 
 
-def air_stone(terrain, difficulty, depth=2.0):  # 基础深度（地形默认高度，低于平台/走廊）
-    start_y, end_y = 20, terrain.length - 20  # 避开边缘20像素
+def air_stone(terrain, difficulty, depth=2.0):  
+    start_y, end_y = 20, terrain.length - 20  
     terrain.height_field_raw[:] = int(-depth / terrain.vertical_scale)
     terrain.height_field_raw[:, start_y:end_y] = 0
 
@@ -230,16 +230,12 @@ def get_muti_stone_trimeshes(center_position, num_rows, num_cols,
     terrain_length = terrain_length / horizontal_scale
     terrain_width = terrain_width / horizontal_scale
 
-    # 定义高度范围
-    max_height = 0.55  # 难度最低时的高度
-    min_height = 0.18  # 难度最高时的高度
+    max_height = 0.55  
+    min_height = 0.18  
 
     for i in range(num_rows):
-        # 计算难度（0~1）：i=0时难度0，i=num_rows-1时难度1
         difficulty = i / (num_rows - 1) if num_rows > 1 else 0
 
-        # 核心：将难度（0~1）线性映射到高度（0.45~0.15）
-        # 公式：height = 最高高度 - (最高-最低) * 难度
         height = max_height - (max_height - min_height) * difficulty
 
         box_size[0] = 4.5
@@ -251,7 +247,6 @@ def get_muti_stone_trimeshes(center_position, num_rows, num_cols,
 
         center = center_position[i, 0:3] + np.array([center_x, center_y, box_size[2]])
 
-        # print(f'stone {i}, difficulty: {difficulty:.2f}, height: {height:.2f}')
 
         pos_x = np.random.randint(1, 2) / 10
 
@@ -310,78 +305,56 @@ def add_stone_terrain(terrain, num_rows):
 def add_narrow_terrain(terrain, num_rows):
     terrain.center_position = np.zeros((num_rows, 3))
 
-def narrow_corridor(terrain, difficulty, depth=2.0):  # 基础深度（地形默认高度，低于平台/走廊）
-    # 1. 基础参数初始化（确保所有索引为整数）
-    platform_size = int(2 / terrain.horizontal_scale)  # 平台大小（世界空间2m → 像素，强制整数）
+def narrow_corridor(terrain, difficulty, depth=2.0): 
+    
+    platform_size = int(2 / terrain.horizontal_scale) 
 
-    # 2. 高度参数计算
-    base_height = int(-depth / terrain.vertical_scale)  # 基础地形高度（低于走廊）
-    # wall_abs_height = 200  # 墙体高度（像素，无需裁剪可直接用）
-    # wall_abs_height = np.clip(wall_abs_height, 120, 200)  # 确保墙体高度在合理范围
-    wall_abs_height = np.random.randint(200, 251)  # 生成120~200（含两端）的随机整数
+    
+    base_height = int(-depth / terrain.vertical_scale)  
+    wall_abs_height = np.random.randint(200, 251)  
 
-    # 3. 地形边界定义
-    start_y, end_y = 20, terrain.length - 20  # 避开边缘20像素
-    # 初始化地形：基础区域为base_height，中间走廊区域为0（地面高度）
+    
+    start_y, end_y = 20, terrain.length - 20  
     terrain.height_field_raw[:] = base_height
     terrain.height_field_raw[:, start_y:end_y] = 0
 
-    # 4. 走廊中心位置（y轴居中）
-    center_y = terrain.length // 2  # 整数除法，确保中心位置为整数
+    
+    center_y = terrain.length // 2  
 
-    # ---------------- 核心修复：动态间隙计算（确保整数 + 单调递减） ----------------
-    # 定义间隙范围：最小2像素，最大4像素（根据需求调整）
-    min_gap = 2  # 最小间隙（避免走廊过窄无法通过）
-    max_gap = 8  # 最大间隙（最低难度时的宽度）
+    
+    min_gap = 2  
+    max_gap = 8  
 
-    # 关键：难度映射（假设difficulty范围为0~1，若难度范围不同需调整分母）
-    # 公式逻辑：难度越大，间隙越小（线性递减）
+    
     narrow_gap_size = max_gap - (max_gap - min_gap) * difficulty
-    # 强制转换为整数（切片必须用整数！），并通过clip限制范围
-    narrow_gap = int(narrow_gap_size)  # 四舍五入为整数
-    narrow_gap = np.clip(narrow_gap, min_gap, max_gap)  # 确保不超出[2,4]
+    
+    narrow_gap = int(narrow_gap_size)  
+    narrow_gap = np.clip(narrow_gap, min_gap, max_gap)  
 
-    # print('narrow_gap',difficulty, narrow_gap )
-    # 5. 绘制两侧墙体（切片索引均为整数，避免TypeError）
-    # 右侧墙体：从平台结束+20像素开始，到center_y+narrow_gap
+    
     terrain.height_field_raw[platform_size + 20:, center_y + narrow_gap:end_y] = wall_abs_height
-    # 左侧墙体：从start_y到center_y-narrow_gap
     terrain.height_field_raw[platform_size + 20:, start_y:center_y - narrow_gap] = wall_abs_height
 
 def half_sloped_terrain(terrain, level_index, platform_size=2.,
                         slope_strength=None, final_platform_length=5, depth=2.0):
-    """
-    生成包含同坡度的斜坡角度（不再局限于3类），支持连续变化的斜坡强度
-
-    参数:
-        terrain: 地形对象，包含height_field_raw, width, length等属性
-        level_index: 关卡索引，用于用其计算斜坡强度（连续值）
-        platform_size: 平台大小（世界空间）
-        slope_strength: 斜坡强度，None则自动根据level_index计算（连续值）
-        final_platform_length: 最终平台长度
-        depth: 基础深度（用于计算base_height）
-    """
-    # 转换单位并初始化参数
+    
     platform_size = int(platform_size / terrain.horizontal_scale)
 
-    # 关键修改：基于level_index的实际值计算斜坡强度（连续变化）
-    # 不再使用int(level_index)，而是直接用原始值，使斜坡强度有更多变化
+    
     if slope_strength is None:
-        # 示例公式：slope_strength = 基础强度 + 随level_index线性增加的部分
-        # 可根据需要调整系数（如2.5）来控制变化幅度
-        slope_strength = 2.0 + 2.5 * level_index  # 连续变化的斜坡强度
+        slope_strength = 2.0 + 2.5 * level_index  
 
     base_height = int(-depth / terrain.vertical_scale)
 
-    # 定义边界和中间区域范围
+    
     start_y, end_y = 20, terrain.length - 20
-    mid_region = (slice(None), slice(start_y, end_y))  # 中间地形区域
+    mid_region = (slice(None), slice(start_y, end_y))  
 
-    # 初始化所有区域高度
-    terrain.height_field_raw[:] = base_height  # 基础高度
-    terrain.height_field_raw[mid_region] = 0  # 中间区域初始化为0
+    
+    terrain.height_field_raw[:] = base_height  
+    terrain.height_field_raw[mid_region] = 0  
 
-    # 计算各区域的起始和结束位置
+    
     positions = {
         'initial_platform': (0, platform_size),
         'up_slope': (platform_size, 2 * platform_size),
@@ -390,26 +363,25 @@ def half_sloped_terrain(terrain, level_index, platform_size=2.,
         'final_platform': (4 * platform_size, terrain.width)
     }
 
-    # 确保最终平台不会超出地形范围
+    
     positions['final_platform'] = (
         positions['down_slope'][1],
         min(positions['down_slope'][1] + final_platform_length, terrain.width)
     )
 
-    # 上斜坡区域
+    
     up_start, up_end = positions['up_slope']
     xs = np.arange(up_start, up_end)
-    # 基于连续变化的slope_strength计算高度，产生更多样的斜坡
+    
     max_height = slope_strength * (up_end - up_start)
     up_heights = (slope_strength * (xs - up_start)).astype(np.int16)
     terrain.height_field_raw[up_start:up_end, start_y:end_y] = up_heights[:, None]
-    # print('up_start',  up_start, max_height/10)
-    # 中间平台区域
+    
     mid_start, mid_end = positions['mid_platform']
     terrain.height_field_raw[mid_start:mid_end, start_y:end_y] = max_height
 
 
-    # 下斜坡区域
+    
     down_start, down_end = positions['down_slope']
     down_end = min(down_start + (up_end - up_start), positions['final_platform'][0])
     xs = np.arange(down_start, down_end)
@@ -724,7 +696,7 @@ def stepping_breams_terrain(terrain, difficulty, stone_size,  stone_distance, ma
         rotation_angle = 1 / 4
     rotation_breams = False  # np.random.choice([True, False])
 
-    # 生成前排石头
+    
     start_x = 0
     while start_x < terrain.width:
         bream_width = random.randint(min_bream_width, max_bream_width)
@@ -732,7 +704,7 @@ def stepping_breams_terrain(terrain, difficulty, stone_size,  stone_distance, ma
         stop_x = min(terrain.width, start_x + bream_length)
         height = np.random.choice(height_range)
         if rotation_breams:
-            # 根据旋转角度计算每个石头的位置
+            
             for y in range(row1_y, row1_y + bream_width):
                 x_offset = int(rotation_angle * (y - row1_y) * tilt_direction)
                 terrain.height_field_raw[start_x + x_offset : stop_x + x_offset , y] = height
@@ -799,7 +771,7 @@ def stepping_breams_rot_terrain(terrain, difficulty, stone_size,  stone_distance
     else:
         rotation_breams = True  # np.random.choice([True, False])
 
-    # 生成前排石头
+    
     # start_x = 0
     # while start_x < terrain.width:
     #     bream_width = random.randint(min_bream_width, max_bream_width)
@@ -807,7 +779,7 @@ def stepping_breams_rot_terrain(terrain, difficulty, stone_size,  stone_distance
     #     stop_x = min(terrain.width, start_x + bream_length)
     #     height = np.random.choice(height_range)
     #     if rotation_breams:
-    #         # 根据旋转角度计算每个石头的位置
+    
     #         for y in range(row1_y, row1_y + bream_width):
     #             x_offset = int(rotation_angle * (y - row1_y) * tilt_direction)
     #             terrain.height_field_raw[start_x + x_offset : stop_x + x_offset , y] = height
@@ -851,7 +823,7 @@ def stepping_breams_naw_terrain(terrain, difficulty, stone_size,  stone_distance
     min_bream_width = 20
     max_bream_width = 60
 
-    # 生成前排石头
+    
     start_x = 0
     while start_x < terrain.width:
         if difficulty < 0.4:
@@ -913,7 +885,7 @@ def stepping_breams_cross_terrain(terrain, difficulty, stone_size,  stone_distan
         bream_length = random.randint(2, 2)
 
 
-    # 生成前排石头
+    
     start_x = platform_size
     while start_x < terrain.width:
         bream_width = random.randint(min_bream_width, max_bream_width)
@@ -1063,7 +1035,7 @@ def add_breams_terrain(terrain, num_rows):
 
 def parkour_step_terrain(terrain, num_stones=8, x_range=[0.2, 0.4], hurdle_height_range=[0.1, 0.2], platform_size=1.5):
 
-    # 对平台尺寸、x坐标范围、台阶高度进行相应的缩放调整
+    
     platform_size = int(platform_size / terrain.horizontal_scale)
     dis_x_min = round((x_range[0]) / terrain.horizontal_scale)
     dis_x_max = round((x_range[1]) / terrain.horizontal_scale)
@@ -1073,10 +1045,10 @@ def parkour_step_terrain(terrain, num_stones=8, x_range=[0.2, 0.4], hurdle_heigh
     hurdle_height_min = round(hurdle_height_range[0] / terrain.vertical_scale)
     step_height = np.random.randint(hurdle_height_min, hurdle_height_max)
     # print('sf',step_height, hurdle_height_min, hurdle_height_max)
-    # 计算平台相关的x坐标范围
+    
     max_x = int((terrain.width + platform_size) )
 
-    # 设定y坐标范围
+    
     start_y = 2
     end_y = int(terrain.length) - 2
 

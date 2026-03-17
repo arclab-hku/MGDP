@@ -1,5 +1,6 @@
 from legged_gym.envs.baseline.legged_robot_config_baseline import LeggedRobotBaseCfg, LeggedRobotBaseCfgPPO
 import numpy as np
+import os
 
 
 class RandomCfgStage1(LeggedRobotBaseCfg):
@@ -134,7 +135,12 @@ class RandomCfgStage1(LeggedRobotBaseCfg):
         damping = {'joint': 0.8}
 
     class asset(LeggedRobotBaseCfg.asset):
-        asset_name = ["go2"]
+        dog_names = os.environ.get("DOG_NAMES", "")
+        dog_name = os.environ.get("DOG_NAME", "go2")
+        asset_name = (
+            [n.strip() for n in dog_names.split(",") if n.strip()]
+            if dog_names else [dog_name]
+        )
         penalize_contacts_on_narrow = ["base", "Head"]
         terminate_after_contacts_on_narrow = ["base"]
 

@@ -919,24 +919,17 @@ class LeggedRobot(BaseTask):
             Default behaviour: draws height measurement points
         """
         np.set_printoptions(precision=4)
-
-        # 打印目标点信息
-        # print('目标点:', self.terrain.goals_narrow, self.terrain.goals_narrow.shape)
-
-
-        # 球体用于更醒目的标记
+        
         sphere_geom = gymutil.WireframeSphereGeometry(0.1, 10, 10, None, color=(0, 1, 0))
-
-        # 遍历所有目标点并绘制
-        # 假设 goals_narrow 是形状为 (n, 3) 的数组，每个元素是 (x, y, z) 坐标
+        
         for point in self.terrain.goals_narrow:
-            # 提取点的坐标
+            
             x, y, z = point
 
-            # 创建位姿变换
+            
             point_pose = gymapi.Transform(gymapi.Vec3(x, y, z), r=None)
 
-            # 绘制球体标记
+            
             gymutil.draw_lines(sphere_geom, self.gym, self.viewer, self.envs[0], point_pose)
 
 

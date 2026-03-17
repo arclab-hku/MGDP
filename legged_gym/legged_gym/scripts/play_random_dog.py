@@ -19,7 +19,7 @@ def play(args,EXPORT_POLICY, MOVE_CAMERA, RECORD_FRAMES):
     # override some parameters for testing
     env_cfg.env.num_envs = min(env_cfg.env.num_envs, 20)
 
-    # play/可视化时不更新 world model，避免 backward 导致的计算图重复释放报错
+    # Do not update world model during play/visualization to avoid backward graph reuse errors.
     if getattr(env_cfg, "camera", None) is not None:
         env_cfg.camera.update_wm = False
 

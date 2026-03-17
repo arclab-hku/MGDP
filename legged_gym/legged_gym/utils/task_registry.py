@@ -163,7 +163,7 @@ class TaskRegistry():
             copyfile(os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', 'random_dog', 'utils', 'sensor_config.py'), log_dir + '/sensor_config.py')
             copyfile(os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', 'random_dog', 'utils', 'net_work.py'), log_dir + '/net_work.py')
 
-        # 仅在训练时（log_dir 非 None）才向 resume 目录写入 config；play/vis 时 log_root=None -> log_dir=None，绝不覆盖
+        # Only write configs into resume dir during training (log_dir is not None); never overwrite during play/vis.
         if resume and log_dir is not None and log_dir != log_dir1 and log_dir1 is not None:
             config_dir = os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', 'random_dog')
             copyfile(os.path.join(config_dir, 'random_dog_config_stage1.py'), log_dir1 + '/random_dog_config_stage1.py')

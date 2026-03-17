@@ -183,7 +183,7 @@ class Legged_rewards(LeggedRobot):
         return foot_reward
 
     def _reward_feet_clearance(self):
-        # 从self.foot_vel中提取x和y方向的速度分量,计算水平速度
+        
         vf_xy = torch.sqrt(self.foot_vel[:, :, 0] ** 2 + self.foot_vel[:, :, 1] ** 2)
 
         max_FL_foot_heights, max_FL_foot_index = torch.max(self.measured_FL_foot_heights, dim=1, keepdim=True)

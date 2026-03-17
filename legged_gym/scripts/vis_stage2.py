@@ -1,5 +1,12 @@
-from legged_gym.scripts.play_stage2 import *
 import os
+
+# Available dog names: a1, aliengo, anymal_c, b1, go1, go2, lite3, mini_cheetah, mini_point, solo, spot
+# DOG_NAMES = ["aliengo", "anymal_c", "b1", "go1", "lite3", "mini_cheetah", "mini_point",  "spot"]
+DOG_NAMES = [ "go2"]
+
+os.environ["DOG_NAMES"] = ",".join(DOG_NAMES)
+from legged_gym.scripts.play_stage2 import *
+
 
 CUDA_DEVICE_ID = 0
 

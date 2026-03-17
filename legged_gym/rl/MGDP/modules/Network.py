@@ -15,7 +15,7 @@ class TransformerBlock(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
-        # 调整维度顺序：[B, L, D] -> [L, B, D]
+        # [B, L, D] -> [L, B, D]
         x = x.transpose(0, 1)
 
         # Self Attention
@@ -28,7 +28,7 @@ class TransformerBlock(nn.Module):
         x = self.norm2(x + self.dropout(fed_forward))
         # x = self.norm2(fed_forward)
 
-        # 恢复维度顺序：[L, B, D] -> [B, L, D]
+        #[L, B, D] -> [B, L, D]
         return x.transpose(0, 1)
 
 class TransformerEncoder(nn.Module):
@@ -66,13 +66,11 @@ class ProjectionHead(nn.Module):
         self.projection = nn.Linear(input_dim, output_dim)
 
     def forward(self, x):
-        # 假设输入形状: [B, L, input_dim]
-        # 提取CLS token或全局平均池化
-        if x.dim() == 3:  # 如果是序列形式 [B, L, D]
-            # x = x[:, 0, :]  # 使用第一个token (CLS token)
-            x = torch.mean(x, dim=1)  # 全局平均池化，保留更多信息
+        if x.dim() == 3:  
+            # x = x[:, 0, :]  
+            x = torch.mean(x, dim=1)  
 
-        return self.projection(x)  # 输出形状: [B, output_dim])
+        return self.projection(x)  
 
 class VAEModule(nn.Module):
     def __init__(self, input_dim=128, latent_dim=16):
@@ -96,37 +94,36 @@ class VAEModule(nn.Module):
         return z, mean, logvar
 
 class NEWCNNHieghtEncoder(nn.Module):
-    def __init__(self, num_classes):  # 默认输出16个类
+    def __init__(self, num_classes):  
         super(NEWCNNHieghtEncoder, self).__init__()
 
-        # 调整卷积层和池化层以适合输入尺寸
         self.encoder1 = nn.Sequential(
-            nn.Conv2d(1, 8, kernel_size=3, stride=1, padding=1),  # 减少输出通道数
+            nn.Conv2d(1, 8, kernel_size=3, stride=1, padding=1), 
             nn.ReLU(),
             # nn.BatchNorm2d(8),
-            nn.MaxPool2d(kernel_size=2, stride=2)  # 输出尺寸: 8x5
+            nn.MaxPool2d(kernel_size=2, stride=2) 
         )
 
         self.encoder2 = nn.Sequential(
-            nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),  # 减少输出通道数
+            nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1), 
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2)  # 输出尺寸: 4x2
+            nn.MaxPool2d(kernel_size=2, stride=2)  
         )
 
         self.encoder3 = nn.Sequential(
-            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),  # 输出尺寸: 4x2
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),  
             nn.ReLU(),
-            nn.AdaptiveAvgPool2d(1)  # 输出尺寸: 64x1x1
+            nn.AdaptiveAvgPool2d(1)  
         )
 
-        self.fc = nn.Linear(32, num_classes)  # 将64维度映射到num_classes维度
+        self.fc = nn.Linear(32, num_classes)  
 
     def forward(self, x):
-        f1 = self.encoder1(x)  # 输入: 1x17x11, 输出: 16x8x5
-        f2 = self.encoder2(f1)  # 输入: 16x8x5, 输出: 32x4x2
-        f3 = self.encoder3(f2)  # 输入: 32x4x2, 输出: 64x1x1
-        f4 = f3.view(f3.size(0), -1)  # 平展为 (batch_size, 64)
-        x = self.fc(f4)  # 输入: (batch_size, 64), 输出: (batch_size, 16)
+        f1 = self.encoder1(x)  
+        f2 = self.encoder2(f1)  
+        f3 = self.encoder3(f2) 
+        f4 = f3.view(f3.size(0), -1)  
+        x = self.fc(f4) 
         return x
 
 class HeightEncoder(nn.Module):
