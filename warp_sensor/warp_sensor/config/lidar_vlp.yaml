@@ -1,0 +1,42 @@
+lidar_base:
+  num_sensors: 1
+  # note that the image is in shape(num_envs, num_sensors, height, width)
+  height: 100   # scan lines
+  width: 128    # points per scan line
+  horizontal_fov_deg_min: 0.0
+  horizontal_fov_deg_max: 45.0
+
+  vertical_fov_deg_min: -30.0
+  vertical_fov_deg_max: 30.0
+
+  max_range: 10.0
+  min_range: 0.2  # 
+
+  return_pointcloud: True
+  pointcloud_in_world_frame: True
+
+camera_base:
+  num_sensors: 1
+  camera_extrinsics:  
+    translation: [0.0, 0.0, 0.0]    # x, y, z
+    # rotation: [0, 0.5,0, 0.866]  # quaternion [x, y, z, w]
+    rotation: [0, 0, 0]           # euler [roll, pitch, yaw]
+
+    # trans_rad :
+    #   min: [-0.0, -0.0, -0.0]  # x, y, z
+    #   max: [0.0, 0.0, 0.0]     # x, y, z
+    # rot_rad : 
+    #   min: [-0.0, -2, -0.0]  # r p y radians
+    #   max: [0.0, 2, 0.0]     # r p y radians
+
+
+img_process:
+  # resize: [400, 400]        # height width
+  noise: 
+    gaussian: 0.1           # mean
+    dropout: 0.1            # probability
+  clip: [0.0, max_range]    # min, max
+  normalize: True           # return real depth or [0, 1] normalized depth  512 env -> 800mb
+
+terrain_process:
+  offset: False

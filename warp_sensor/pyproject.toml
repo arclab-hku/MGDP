@@ -1,0 +1,44 @@
+[project]
+name = "warp_sensor"
+version = "0.2.0"
+description = "A highly modular and extensible sensor simulator for robotics research."
+authors = [
+    {name = "maji", email = "maji@connect.hku.hk"},
+    {name = "cyk", email = " chenyeke@zju.edu.cn"}
+]
+dependencies = [
+    "torch",
+    "torchvision",
+    "numpy",
+    "warp-lang == 1.4.2",
+    "pyyaml",
+    "pygame",
+    "typing",
+    "pyqt5",
+    "pyopengl",
+    "zmq",
+    "pyzmq",
+    "trimesh",
+    "proto-plus",
+    "vizer",
+]
+
+requires-python = "==3.8.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+[tool.pdm]
+distribution = false
+# py_modules
+
+[tool.setuptools]
+packages = ["warp_sensor", "gviz"]
+py-modules = ["warp_sensor.warp_manager", "warp_sensor.test"]
+
+[project.scripts]
+warp-cam = "warp_sensor.test.test_cam:test_cam"
+warp-lidar = "warp_sensor.test.test_lidar:test_lidar"
+
+# [build-system]
+# requires = ["setuptools", "wheel", "pyarmor==7.7.4"]
+# build-backend = "pyarmor.build_meta"
