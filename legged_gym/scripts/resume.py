@@ -11,7 +11,7 @@ print("parent_dir2:", parent_dir)
 
 args = get_args()
 args.task = 'random_dog_stage2'
-args.num_envs = 4096
+args.num_envs = 4
 args.headless = True
 cuda = f"cuda:{CUDA_DEVICE_ID}"
 args.rl_device = cuda

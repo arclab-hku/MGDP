@@ -10,12 +10,13 @@ This repository provides the environment used to train Unitree Go1, Aliengo and 
 ### Installation
 
 1. Create a new Python virtual env with Python 3.8 (3.8.20 recommended).
+   - `conda create -n MGDP_1 python=3.8.20`
 2. Install PyTorch 1.10 with CUDA 11.3:
    ```bash
    pip install torch==1.10.0+cu113 torchvision==0.11.1+cu113 torchaudio==0.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
    ```
 3. Install Isaac Gym:
-   - Download and install Isaac Gym.
+   - `cd MGDP`
    - `cd isaacgym/python && pip install -e .`
    - Try running an example: `cd examples && python 1080_balls_of_solitude.py`
 4. Install this repo (e.g. `legged_gym` / NavEnvs):
@@ -23,10 +24,9 @@ This repository provides the environment used to train Unitree Go1, Aliengo and 
    - `pip install -e .`
    - `pip install -r requirement-gpu.txt`
 5. Install Warp:
-   - `git clone https://github.com/Astrorix/warp_sensor.git`
    - `cd warp_sensor && pip install -e .`
-   - Test: `warp-sensor`
-
+   - Test: `warp-cam`
+   - exit: `esc`
 ---
 
 ### Usage
@@ -34,7 +34,7 @@ This repository provides the environment used to train Unitree Go1, Aliengo and 
 1. **Train world model**  
    From repo root:
    ```bash
-   cd scripts
+   cd legged_gym/scripts/
    python train.py
    ```
    Edit `train.py` to set `args.task` (e.g. `random_dog_stage1`), `args.output_name`, GPU id, etc.
