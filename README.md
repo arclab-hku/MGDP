@@ -37,15 +37,13 @@ We leverage NVIDIA Warp to enable efficient parallel computation of depth images
 ## Usage
 1. **Stage 1: Train a Generalized Depth Perception Model (MGDP Stage 1)**
    ```bash
-   cd legged_gym/scripts
-   python train.py
+   python legged_gym/scripts/train.py
    ```
    - Edit `train.py` to set `args.task` (e.g. `random_dog_stage1`), `args.output_name`, GPU id, etc.
 
 2. **Stage 2: Train a Generalized Perception-based Locomotion Controller (resume / fine-tune)**
    ```bash
-   cd legged_gym/scripts
-   python resume.py
+   python legged_gym/scripts/resume.py
    ```
    - Edit `resume.py` to set `args.resume_name` (previous run path), `args.output_name` (save path), and `args.task` (e.g. `random_dog_stage2`).
    - **Select robot(s)**:
@@ -53,17 +51,16 @@ We leverage NVIDIA Warp to enable efficient parallel computation of depth images
      - If `DOG_NAMES` is not set, it falls back to `DOG_NAME`.
 
 3. **Play / visualize**
-   ```bash
-   cd legged_gym/scripts
-   python vis_stage1.py
-   # or
-   python vis_stage2.py
-   ```
-   - `vis_stage1.py`: visualize Stage 1 (Generalized Depth Perception Model / world model training).
-   - `vis_stage2.py`: visualize Stage 2 (Generalized Perception-based Locomotion Controller).
-
+   - To visualize the Generalized Depth Perception Model:
+      ```bash
+      python legged_gym/scripts/vis_stage1.py
+      ```
+   - To visualize the Generalized Perception-based Locomotion Controller:
+         
+      ```bash
+      python legged_gym/scripts/vis_stage1.py
+      ```
 4. **View the terrain**
    ```bash
-   cd legged_gym/scripts
-   python play_terrain.py
+   python legged_gym/scripts/play_terrain.py
    ```
