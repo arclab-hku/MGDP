@@ -16,7 +16,7 @@ We leverage NVIDIA Warp to enable efficient parallel computation of depth images
 
 ## Installation
 1. Create a Python virtual env with Python 3.8 (3.8.20 recommended).
-   - `conda create -n MGDP_1 python=3.8.20`
+   - `conda create -n MGDP python=3.8.20`
 2. Install PyTorch 1.10 with CUDA 11.3:
    ```bash
    pip install torch==1.10.0+cu113 torchvision==0.11.1+cu113 torchaudio==0.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
