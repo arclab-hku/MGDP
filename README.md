@@ -57,7 +57,7 @@ We leverage NVIDIA Warp to enable efficient parallel computation of depth images
    - To visualize the Generalized Perception-based Locomotion Controller:
          
       ```bash
-      python legged_gym/scripts/vis_stage1.py
+      python legged_gym/scripts/vis_stage2.py
       ```
 4. **View the terrain**
    ```bash
