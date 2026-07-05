@@ -13,7 +13,7 @@ CUDA_DEVICE_ID = 0
 
 args = get_args()
 args.task = 'random_dog_stage1'
-args.num_envs = 1024
+args.num_envs = 3
 args.headless = True
 cuda = f"cuda:{CUDA_DEVICE_ID}"
 args.rl_device = cuda
@@ -26,7 +26,7 @@ args.algo = 'MGDP'
 
 args.load_world_model_policy = False
 
-args.output_name = os.path.join(LEGGED_GYM_ROOT_DIR, 'outputs/random_dog/MGDP/stage1/baseline1')
+args.output_name = os.path.join(LEGGED_GYM_ROOT_DIR, 'outputs/random_dog/MGDP/stage1/baseline2')
 
 print("args.output_name:", args.output_name)
 train(args)

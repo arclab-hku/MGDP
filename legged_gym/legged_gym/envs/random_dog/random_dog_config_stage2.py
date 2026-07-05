@@ -1,5 +1,5 @@
 from legged_gym.envs.baseline.legged_robot_config_baseline import LeggedRobotBaseCfg, LeggedRobotBaseCfgPPO
-from legged_gym.envs.random_dog.random_dog_config_stage1 import RandomCfgPPOStage1
+from legged_gym.envs.random_dog.random_dog_config_stage1 import RandomCfgStage1, RandomCfgPPOStage1
 import numpy as np
 import os
 
@@ -16,40 +16,12 @@ class RandomCfgStage2(LeggedRobotBaseCfg):
         use_history = True
         env_gait = 1
 
-    class camera(LeggedRobotBaseCfg.camera):
-        render_compare_pre_vis = False
-        render_compare_pre_map = False
-        camera_type = 'warp'
-        render_compare_pre_map_real_data = False
-        use_camera = True
-        world_model = True
-        use_memory = True
-
-        # ####### without ########
-        # noise_gaussian = None
-        # noise_dropout =  None
-
-        # ###### with  noise_gaussian ########
-        # noise_gaussian = 0.03
-        # noise_dropout =  None
-        #
-        # ####### with noise_gaussian ########
-        # noise_gaussian = None
-        # noise_dropout =  0.04
-        #
-        # ####### with noise_gaussian_dropout ########
-        noise_gaussian = 0.03
-        noise_dropout = 0.1
-
-
-        normalize = True
-
-        update_wm = True
-
-        use_map_decoder = True
-
+    class camera(RandomCfgStage1.camera):
+        # Same WM / depth update schedule as stage1; only differ in loading pretrained weights.
         load_world_model_policy = True
-        load_world_model_policy_file = "{LEGGED_GYM_ROOT_DIR}" +'/models/MGDP/stage1/001'
+        load_world_model_policy_file = (
+            "{LEGGED_GYM_ROOT_DIR}" + '/outputs/random_dog/MGDP/stage1/baseline'
+        )
 
     class terrain(LeggedRobotBaseCfg.terrain):
         mesh_type = 'gap_parkour'
@@ -154,45 +126,16 @@ class RandomCfgStage2(LeggedRobotBaseCfg):
         penalize_contacts_on = ["base", "Head"]
         terminate_after_contacts_on = ["base"]
 
-    class privInfo(LeggedRobotBaseCfg.privInfo):
-        enableMeasuredVel = True
-        enablePayload = False
-        enableFriction = False
-        enableStiffnessDamping = False
-        enableMotorStrength = False
-        enablemMotorOffsets = False
-        enableCom = False
-        enableLimb_mass = False
-        enableForce = False
-        enableFootContact = False
-        enableFootHeight = True
+    class privInfo(RandomCfgStage1.privInfo):
+        pass
 
-        enableMaxFootHeight = False
+    class domain_rand(RandomCfgStage1.domain_rand):
+        pass
 
-        enableMeasuredHeight = True
-
-    class domain_rand(LeggedRobotBaseCfg.domain_rand):
-        randomize_action_latency = True
-        latency_range = [0.00, 0.02]
-
-    class rewards(LeggedRobotBaseCfg.rewards):
-        terrain_adaptive_reward = False
-        class scales(LeggedRobotBaseCfg.rewards.scales):
-            tracking_lin_vel = 1.5
-            tracking_ang_vel = 0.5
-            lin_vel_z = -1
-            ang_vel_xy = -0.05
-            torques = -1e-5
-            dof_acc = -2.5e-7
-            action_rate = -0.01
-            orientation = -0.2
-            collision = -1
-
-            feet_air_time = 1
-            feet_stumble = -1
+    class rewards(RandomCfgStage1.rewards):
+        class scales(RandomCfgStage1.rewards.scales):
+            # gap_parkour-specific terms on top of stage1 PPO reward scales
             feet_edge = -1.0
-
-            motion_trot = -0.1
             dof_pos_limits = -10.0
             torque_limits = -0.0
 
