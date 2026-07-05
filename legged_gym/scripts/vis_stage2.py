@@ -5,17 +5,17 @@ import os
 DOG_NAMES = [ "go2"]
 
 os.environ["DOG_NAMES"] = ",".join(DOG_NAMES)
+from legged_gym import LEGGED_GYM_ROOT_DIR
 from legged_gym.scripts.play_stage2 import *
 
 
 CUDA_DEVICE_ID = 0
 
-current_dir = os.getcwd()
-parent_dir = os.path.dirname(current_dir)
-
 EXPORT_POLICY = False
 RECORD_FRAMES = False
 MOVE_CAMERA = True
+VIS_ENV_ID = 0           # default env to follow / log (0-based); override via --vis_env_id
+
 args = get_args()
 
 args.task = 'random_dog_stage2'
@@ -29,11 +29,13 @@ args.graphics_device_num = CUDA_DEVICE_ID
 args.checkpoint_model = 'model_26000.pt'
 args.load_world_model_policy = True
 args.update_wm = False
+if args.vis_env_id is None:
+    args.vis_env_id = VIS_ENV_ID
 
 args.algo = 'MGDP'
-real_path = "/models/MGDP/stage2/001"
+model_dir = os.path.join(LEGGED_GYM_ROOT_DIR, 'models/MGDP/stage2/001')
 
-args.output_name = parent_dir + real_path
-args.resume_name = parent_dir + real_path
-args.load_world_model_path = parent_dir + real_path
-play(args, EXPORT_POLICY, RECORD_FRAMES, MOVE_CAMERA)
+args.output_name = model_dir
+args.resume_name = model_dir
+args.load_world_model_path = model_dir
+play(args, EXPORT_POLICY, MOVE_CAMERA, RECORD_FRAMES)

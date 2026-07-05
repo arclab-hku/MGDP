@@ -27,7 +27,7 @@ class RandomCfgStage1(LeggedRobotBaseCfg):
         use_memory = True
 
         noise_gaussian = 0.03
-        noise_dropout = 0.1
+        noise_dropout =  0.1
 
         normalize = True
         resized = [16, 16]
@@ -50,8 +50,10 @@ class RandomCfgStage1(LeggedRobotBaseCfg):
         wm_decoder_lr_scale = 1.0
         wm_weight_decay = 1e-5
         wm_grad_clip = 1.0
+        wm_sensor_steps = 1
+        wm_rollout_steps = 4
 
-        update_interval = 5
+        update_interval = 1
 
         load_world_model_policy = False
         load_world_model_policy_file = "{LEGGED_GYM_ROOT_DIR}" + '/models/MGDP/stage1/001'
@@ -195,7 +197,7 @@ class RandomCfgPPOStage1(LeggedRobotBaseCfgPPO):
         run_name = ''
         max_iterations = 60001
         resume = False
-        save_interval = 2000
+        save_interval = 1000
         experiment_name = 'random_dog_stage1'
 
     class Encoder(LeggedRobotBaseCfgPPO.Encoder):
@@ -212,9 +214,9 @@ class RandomCfgPPOStage1(LeggedRobotBaseCfgPPO):
 
         CNNModule_info = {
             'input_channels': 2,
-            'hidden_channels': [32, 64, 64],
+            'hidden_channels': [32, 64, 96],
             'output_channels': 64,
-            'pool': 2
+            'pool': 4
         }
 
         MapModule_info = {

@@ -4,6 +4,7 @@ from legged_gym.envs import Legged_rewards
 from legged_gym.envs import Legged_camera, CameraMixin
 from .random_dog_config_stage1 import RandomCfgStage1, RandomCfgPPOStage1
 import cv2, os
+import numpy as np
 import torch
 from isaacgym.torch_utils import *
 from isaacgym import gymtorch, gymapi, gymutil
@@ -75,6 +76,7 @@ class Randomdog(CameraMixin, Legged_terrains, Legged_camera, Legged_rewards, Leg
             self.info_nce_loss = nn.CrossEntropyLoss()
             self.mse_loss = nn.MSELoss()
             self.l1_loss = nn.L1Loss()
+            self.latest_world_model_batch = None
 
             if self.load_world_model_policy:
                 from legged_gym import LEGGED_GYM_ROOT_DIR
@@ -237,10 +239,10 @@ class Randomdog(CameraMixin, Legged_terrains, Legged_camera, Legged_rewards, Leg
         elif self.cfg.camera.camera_type == 'warp':
             self.warp_manager.warp_update_frame()
             if self.cfg.camera.use_camera == True:
-                cur_images = self.warp_manager['camera'].data.squeeze()
+                cur_images = self.warp_manager['camera'].data.squeeze(1)
 
             if self.cfg.camera.use_lidar == True:
-                self.cur_lidar = self.warp_manager['lidar'].data.squeeze()
+                self.cur_lidar = self.warp_manager['lidar'].data.squeeze(1)
                 # print('cur_images',  self.cur_lidar.shape)
 
             noisy_cur_images = cur_images.clone()
@@ -290,56 +292,15 @@ class Randomdog(CameraMixin, Legged_terrains, Legged_camera, Legged_rewards, Leg
             self.gym.end_access_image_tensors(self.sim)
 
         if self.use_world_model:
-            self.visual_l1_loss = 0
-            self.visual_mse_loss = 0
-
-            self.height_map_bce_loss = 0
-            self.contrastive_loss = 0
-
-            visual_input = self.image_buf.to(self.device)
-            batch_size = visual_input.size(0)
-
-            if not getattr(self, '_update_wm', self.cfg.camera.update_wm):
-                with torch.no_grad():
-                    visual_pre, obs_height_pre, obs_height_input, visual_token, self.visual_mse_loss, self.visual_l1_loss, \
-                        self.height_mse_loss, self.height_l1_loss, self.contrastive_loss, \
-                        self.height_visual_mse_loss = self.compute_world_model_outputs(
-                        visual_input, batch_size, update_wm=False
-                    )
-
-                    self.total_wm_loss = (1.0 * self.visual_mse_loss + 0.0 * self.visual_l1_loss +
-                                          1.0 * self.height_mse_loss + 0.0 * self.height_l1_loss +
-                                          0.0 * self.height_visual_mse_loss +
-                                          0.0 * self.contrastive_loss)
-            else:
-                visual_input = self.image_buf.to(self.device).clone().detach().requires_grad_(True)
-                (visual_pre, obs_height_pre, obs_height_input, visual_token, self.visual_mse_loss,
-                 self.visual_l1_loss, \
-                    self.height_mse_loss, self.height_l1_loss, self.contrastive_loss, \
-                    self.height_visual_mse_loss) = self.compute_world_model_outputs(
-                    visual_input, batch_size, update_wm=True
-                )
-
-                w_v_mse = getattr(self.cfg.camera, 'wm_visual_mse_weight', 0.7)
-                w_v_l1 = getattr(self.cfg.camera, 'wm_visual_l1_weight', 0.3)
-                w_h_mse = getattr(self.cfg.camera, 'wm_height_mse_weight', 1.0)
-                w_h_l1 = getattr(self.cfg.camera, 'wm_height_l1_weight', 0.2)
-                w_hv = getattr(self.cfg.camera, 'wm_height_visual_mse_weight', 0.7)
-                w_cont = getattr(self.cfg.camera, 'wm_contrastive_weight', 0.3)
-                self.total_wm_loss = (w_v_mse * self.visual_mse_loss + w_v_l1 * self.visual_l1_loss +
-                                      w_h_mse * self.height_mse_loss + w_h_l1 * self.height_l1_loss +
-                                      w_hv * self.height_visual_mse_loss + w_cont * self.contrastive_loss)
-                self.total_wm_loss.requires_grad_(True)
-
-                self.wm_optimizer.zero_grad()
-                self.total_wm_loss.backward()
-                wm_grad_clip = getattr(self.cfg.camera, 'wm_grad_clip', None)
-                if wm_grad_clip is not None and wm_grad_clip > 0:
-                    all_wm_params = []
-                    for g in self.wm_optimizer.param_groups:
-                        all_wm_params += g['params']
-                    torch.nn.utils.clip_grad_norm_(all_wm_params, max_norm=float(wm_grad_clip))
-                self.wm_optimizer.step()
+            sensor_batch = self.build_world_model_batch()
+            self.latest_world_model_batch = sensor_batch
+            sensor_steps = int(getattr(self.cfg.camera, 'wm_sensor_steps', 1))
+            if sensor_steps < 1:
+                sensor_steps = 1
+            visual_pre, obs_height_pre, obs_height_input, visual_token = self.update_world_model(
+                batch=sensor_batch,
+                num_updates=sensor_steps if getattr(self, '_update_wm', self.cfg.camera.update_wm) else 0,
+            )
             if self.cfg.camera.render_compare_pre_map and self.use_map_decoder and obs_height_pre is not None:
                 pred_height = obs_height_pre[0, 0].detach().cpu().numpy()
                 true_height = obs_height_input[0, 0].detach().cpu().numpy()
@@ -357,22 +318,33 @@ class Randomdog(CameraMixin, Legged_terrains, Legged_camera, Legged_rewards, Leg
                 cv2.imshow("Sparse Height Comparison", comparison_img)
                 cv2.waitKey(1)
 
-            if self.cfg.camera.render_compare_pre_vis:
-                scale_factor = 20
-                vis_env_id = min(1, visual_pre.size(0) - 1)
-                img_np = visual_pre[vis_env_id, 0].detach().cpu().numpy()
-                new_size = (int(img_np.shape[1] * scale_factor), int(img_np.shape[0] * scale_factor))
-                img_pre_scaled = cv2.resize(img_np, new_size, interpolation=cv2.INTER_LINEAR)
-
-                img_noise_np = self.image_buf[vis_env_id, 0].detach().cpu().numpy()
-                img_noise_scaled = cv2.resize(img_noise_np, new_size, interpolation=cv2.INTER_LINEAR)
-
-                img_clean_np = self.image_clean_buf[vis_env_id, 0].detach().cpu().numpy()
-                img_clean_scaled = cv2.resize(img_clean_np, new_size, interpolation=cv2.INTER_LINEAR)
-
-                combined = np.hstack((img_noise_scaled, img_pre_scaled, img_clean_scaled))
-                cv2.imshow("Noise and Clean Image", combined)
-                cv2.waitKey(1)
+            if self.cfg.camera.render_compare_pre_vis and visual_pre is not None:
+                vis_env_id = getattr(self.cfg.viewer, 'ref_env', 0)
+                vis_env_id = min(max(vis_env_id, 0), visual_pre.size(0) - 1)
+                frame_idx = -1 if self.image_nums else 0
+                img_noise_np = self.image_buf[vis_env_id, frame_idx].detach().cpu().numpy()
+                img_pre_np = visual_pre[vis_env_id, frame_idx].detach().cpu().numpy()
+                img_clean_np = self.image_clean_buf[vis_env_id, frame_idx].detach().cpu().numpy()
+                if not getattr(self, '_depth_vis_stats_printed', False):
+                    pred_t = torch.as_tensor(img_pre_np)
+                    clean_t = torch.as_tensor(img_clean_np)
+                    mse = float(((pred_t - clean_t) ** 2).mean())
+                    mae = float((pred_t - clean_t).abs().mean())
+                    max_diff = float((pred_t - clean_t).abs().max())
+                    cprint(
+                        f"[depth vis] env={vis_env_id} frame={frame_idx} | "
+                        f"noise [{img_noise_np.min():.4f}, {img_noise_np.max():.4f}] | "
+                        f"predicted [{img_pre_np.min():.4f}, {img_pre_np.max():.4f}] | "
+                        f"clean [{img_clean_np.min():.4f}, {img_clean_np.max():.4f}] | "
+                        f"pred vs clean: MSE={mse:.6f}, MAE={mae:.6f}, max|diff|={max_diff:.6f}",
+                        'cyan',
+                    )
+                    self._depth_vis_stats_printed = True
+                combined = self.draw_depth_compare_panel(
+                    img_noise_np, img_pre_np, img_clean_np,
+                    scale_factor=getattr(self.cfg.camera, 'compare_vis_scale', 20),
+                )
+                self.show_depth_compare_panel(combined)
 
             if self.use_memory:
                 visual_token, self.hidden_states = self.memory_lstm(visual_token, self.hidden_states)
@@ -384,36 +356,180 @@ class Randomdog(CameraMixin, Legged_terrains, Legged_camera, Legged_rewards, Leg
         else:
             self.obs_dict['image_buf'] = self.image_buf.to(self.device)
 
-    def compute_world_model_outputs(self, visual_input, batch_size, update_wm=False):
+    @staticmethod
+    def depth_to_vis_uint8(img, stretch_low_contrast=True, vmin=None, vmax=None):
+        """Convert normalized/float depth image to a visible uint8 grayscale image."""
+        img = np.asarray(img)
+        img = np.nan_to_num(img, nan=0.0, posinf=1.0, neginf=0.0).astype(np.float32)
+
+        if img.size == 0:
+            return np.zeros((16, 16), dtype=np.uint8)
+
+        img_min = float(vmin if vmin is not None else img.min())
+        img_max = float(vmax if vmax is not None else img.max())
+
+        if img_max - img_min < 1e-6:
+            return np.zeros_like(img, dtype=np.uint8)
+
+        vis = (img - img_min) / (img_max - img_min)
+        return np.clip(vis * 255.0, 0.0, 255.0).astype(np.uint8)
+
+    @staticmethod
+    def draw_depth_compare_panel(noise_img, pred_img, clean_img, scale_factor=20,
+                                 labels=("Noise image", "Predicted image", "Clean image")):
+        """Side-by-side panel: noisy depth | world-model reconstruction | clean depth."""
+        label_h = 36
+        imgs = [noise_img, pred_img, clean_img]
+        stacked = np.concatenate([
+            np.nan_to_num(np.asarray(im), nan=0.0, posinf=1.0, neginf=0.0).astype(np.float32).ravel()
+            for im in imgs
+        ])
+        shared_min = float(stacked.min())
+        shared_max = float(stacked.max())
+
+        scaled_imgs = []
+        for img in imgs:
+            img = Randomdog.depth_to_vis_uint8(img, vmin=shared_min, vmax=shared_max)
+            h, w = img.shape[:2]
+            new_size = (int(w * scale_factor), int(h * scale_factor))
+            scaled = cv2.resize(img, new_size, interpolation=cv2.INTER_LINEAR)
+            if scaled.ndim == 2:
+                scaled = cv2.cvtColor(scaled, cv2.COLOR_GRAY2BGR)
+            scaled_imgs.append(scaled)
+
+        img_h, img_w = scaled_imgs[0].shape[:2]
+        panel_w = img_w * len(scaled_imgs)
+        panel = np.full((label_h + img_h, panel_w, 3), 220, dtype=np.uint8)
+        for i, (img, label) in enumerate(zip(scaled_imgs, labels)):
+            x0 = i * img_w
+            panel[label_h:label_h + img_h, x0:x0 + img_w] = img
+            cv2.putText(
+                panel, label, (x0 + 8, 24),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.55, (20, 20, 20), 1, cv2.LINE_AA,
+            )
+        return panel
+
+    def show_depth_compare_panel(self, combined_bgr):
+        """Show depth-compare panel in an OpenCV window; always save PNG as fallback."""
+        window_name = "Depth Compare: Noise | Predicted | Clean"
+        save_dir = getattr(self.cfg.camera, 'compare_vis_save_dir', None)
+        if save_dir:
+            os.makedirs(save_dir, exist_ok=True)
+            cv2.imwrite(os.path.join(save_dir, 'latest.png'), combined_bgr)
+
+        if not getattr(self, '_depth_vis_window_ready', False):
+            try:
+                cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+                cv2.resizeWindow(window_name, combined_bgr.shape[1], combined_bgr.shape[0])
+                self._depth_vis_window_ready = True
+            except cv2.error:
+                self._depth_vis_window_ready = False
+
+        if getattr(self, '_depth_vis_window_ready', False):
+            cv2.imshow(window_name, combined_bgr)
+            cv2.waitKey(1)
+        elif not getattr(self, '_depth_vis_headless_warned', False):
+            hint = save_dir if save_dir else "(set compare_vis_save_dir to save PNG)"
+            cprint(
+                f"[depth vis] OpenCV window unavailable (no GUI DISPLAY?). "
+                f"View saved frames at: {hint}/latest.png",
+                'yellow', attrs=['bold'],
+            )
+            self._depth_vis_headless_warned = True
+
+    def build_world_model_batch(self):
+        visual_input = torch.nan_to_num(self.image_buf.detach().clone(), nan=0.0, posinf=1.0, neginf=0.0)
+        target_clean = torch.nan_to_num(self.image_clean_buf.detach().clone(), nan=0.0, posinf=1.0, neginf=0.0)
+        n_rows = getattr(self.cfg.terrain, 'num_point_x', 17)
+        n_cols = getattr(self.cfg.terrain, 'num_point_y', 11)
+        num_points = n_rows * n_cols
+        n_size = int((self.heights.shape[1] / max(1, num_points)) ** 0.5)
+        height_input = (self.heights / self.obs_scales.height_measurements).view(
+            self.image_buf.size(0), 1, n_size * n_rows, n_size * n_cols
+        )
+        height_input = torch.clamp(height_input, -1.0, 1.0)
+        height_input = torch.nan_to_num(height_input, nan=0.0, posinf=1.0, neginf=-1.0)
+        return {
+            'visual_input': visual_input,
+            'target_clean': target_clean,
+            'height_input': height_input.detach().clone(),
+        }
+
+    def update_world_model(self, batch=None, num_updates=1):
+        if batch is None:
+            batch = self.latest_world_model_batch
+        if batch is None:
+            self.visual_mse_loss = torch.tensor(0.0, device=self.device)
+            self.visual_l1_loss = torch.tensor(0.0, device=self.device)
+            self.height_mse_loss = torch.tensor(0.0, device=self.device)
+            self.height_l1_loss = torch.tensor(0.0, device=self.device)
+            self.contrastive_loss = torch.tensor(0.0, device=self.device)
+            self.height_visual_mse_loss = torch.tensor(0.0, device=self.device)
+            self.total_wm_loss = torch.tensor(0.0, device=self.device)
+            return None, None, None, self.obs_dict.get('image_buf', None)
+
+        num_updates = int(max(0, num_updates))
+        do_train = getattr(self, '_update_wm', self.cfg.camera.update_wm) and num_updates > 0
+        steps = num_updates if do_train else 1
+        visual_pre = obs_height_pre = obs_height_input = visual_token = None
+
+        for _ in range(steps):
+            with torch.inference_mode(False):
+                visual_input = batch['visual_input'].to(self.device).clone()
+                target_clean = batch['target_clean'].to(self.device).clone()
+                obs_height_input = batch['height_input'].to(self.device).clone()
+                if do_train:
+                    visual_input = visual_input.detach().requires_grad_(True)
+                    obs_height_input = obs_height_input.detach().requires_grad_(True)
+                with torch.set_grad_enabled(do_train):
+                    (visual_pre, obs_height_pre, obs_height_input, visual_token, self.visual_mse_loss,
+                     self.visual_l1_loss, self.height_mse_loss, self.height_l1_loss, self.contrastive_loss,
+                     self.height_visual_mse_loss) = self.compute_world_model_outputs(
+                        visual_input=visual_input,
+                        target_clean=target_clean,
+                        obs_height_input=obs_height_input
+                    )
+
+                    w_v_mse = getattr(self.cfg.camera, 'wm_visual_mse_weight', 1.0)
+                    w_h_mse = getattr(self.cfg.camera, 'wm_height_mse_weight', 1.0)
+                    w_cont = getattr(self.cfg.camera, 'wm_contrastive_weight', 0.3)
+                    self.total_wm_loss = (
+                        w_v_mse * self.visual_mse_loss +
+                        w_h_mse * self.height_mse_loss +
+                        w_cont * self.contrastive_loss
+                    )
+                    if do_train:
+                        self.wm_optimizer.zero_grad()
+                        self.total_wm_loss.backward()
+                        wm_grad_clip = getattr(self.cfg.camera, 'wm_grad_clip', None)
+                        if wm_grad_clip is not None and wm_grad_clip > 0:
+                            all_wm_params = []
+                            for g in self.wm_optimizer.param_groups:
+                                all_wm_params += g['params']
+                            torch.nn.utils.clip_grad_norm_(all_wm_params, max_norm=float(wm_grad_clip))
+                        self.wm_optimizer.step()
+
+        return visual_pre, obs_height_pre, obs_height_input, visual_token
+
+    def compute_world_model_outputs(self, visual_input, target_clean, obs_height_input=None):
         """Forward and loss for depth (visual) and height map. Returns visual_pre, height_pre, inputs, token, losses."""
-        visual_input = torch.nan_to_num(visual_input, nan=0.0, posinf=1.0, neginf=0.0)
+        batch_size = visual_input.size(0)
         visual_token = self.cnn_encoder(visual_input)
         visual_pre = self.cnn_decoder(
             visual_token,
             encoder_skips=self.cnn_encoder.skip_connections,
-            target_size=(self.image_clean_buf.size(2), self.image_clean_buf.size(3))
+            target_size=(target_clean.size(2), target_clean.size(3))
         )
         visual_pre = visual_pre.clamp(0.0, 1.0)
-        target_clean = self.image_clean_buf.clamp(0.0, 1.0)
+        target_clean = target_clean.clamp(0.0, 1.0)
         visual_mse_loss = self.mse_loss(visual_pre, target_clean)
-        visual_l1_loss = self.compute_edge_loss(visual_pre, target_clean)
+        visual_l1_loss = torch.zeros((), device=self.device)
 
         obs_height_pre = None
-        obs_height_input = None
         height_mse_loss = height_l1_loss = contrastive_loss = height_visual_mse_loss = 0.0
         if self.use_map_decoder:
-            n_rows = getattr(self.cfg.terrain, 'num_point_x', 17)
-            n_cols = getattr(self.cfg.terrain, 'num_point_y', 11)
-            num_points = n_rows * n_cols
-            n_size = int((self.heights.shape[1] / max(1, num_points)) ** 0.5)
-            obs_height_input = (self.heights / self.obs_scales.height_measurements).view(
-                batch_size, 1, n_size * n_rows, n_size * n_cols
-            )
-            obs_height_input = torch.clamp(obs_height_input, -1.0, 1.0)
-            obs_height_input = torch.nan_to_num(obs_height_input, nan=0.0, posinf=1.0, neginf=-1.0)
-            if update_wm:
-                obs_height_input = obs_height_input.clone().detach().requires_grad_(True)
-
+            n_rows = obs_height_input.size(2)
+            n_cols = obs_height_input.size(3)
             height_token = self.map_encoder(obs_height_input)
             obs_height_pre = self.map_decoder(
                 height_token,
@@ -422,7 +538,7 @@ class Randomdog(CameraMixin, Legged_terrains, Legged_camera, Legged_rewards, Leg
             )
 
             height_mse_loss = self.mse_loss(obs_height_pre, obs_height_input)
-            height_l1_loss = self.compute_edge_loss(obs_height_pre, obs_height_input)
+            height_l1_loss = torch.zeros((), device=self.device)
 
             height_token_norm = F.normalize(height_token, p=2, dim=1, eps=1e-8)
             visual_token_32 = visual_token[:, 0:32]
@@ -431,13 +547,12 @@ class Randomdog(CameraMixin, Legged_terrains, Legged_camera, Legged_rewards, Leg
                 sim_matrix = torch.matmul(height_token_norm, visual_token_norm.T) / self.temperature
                 labels = torch.arange(batch_size, device=self.device)
                 contrastive_loss = self.info_nce_loss(sim_matrix, labels)
-                height_visual_mse_loss = self.mse_loss(height_token_norm, visual_token_norm)
+                height_visual_mse_loss = torch.zeros((), device=self.device)
             else:
                 contrastive_loss = torch.tensor(0.0, device=self.device)
                 height_visual_mse_loss = torch.tensor(0.0, device=self.device)
 
-
-        return visual_pre, obs_height_pre, obs_height_input,visual_token, visual_mse_loss, visual_l1_loss, \
+        return visual_pre, obs_height_pre, obs_height_input, visual_token, visual_mse_loss, visual_l1_loss, \
             height_mse_loss, height_l1_loss, contrastive_loss, \
             height_visual_mse_loss
 

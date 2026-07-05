@@ -158,6 +158,43 @@ class MGDPPolicyRunner:
                 stop = time.time()
                 collection_time = stop - start
 
+                extra_wm_updates = 0
+                if getattr(self.env, 'use_world_model', False):
+                    extra_wm_updates = int(getattr(self.env.cfg.camera, 'wm_rollout_steps', 0))
+                    if extra_wm_updates > 0:
+                        extra_update_visual_mse = 0.0
+                        extra_update_height_mse = 0.0
+                        extra_update_height_visual_mse = 0.0
+                        extra_update_contrastive = 0.0
+                        extra_update_visual_l1 = 0.0
+                        extra_update_height_l1 = 0.0
+                        extra_update_total = 0.0
+                        for _ in range(extra_wm_updates):
+                            self.env.update_world_model(
+                                batch=getattr(self.env, 'latest_world_model_batch', None),
+                                num_updates=1,
+                            )
+                            extra_update_visual_mse += self.env.visual_mse_loss.item()
+                            extra_update_height_mse += self.env.height_mse_loss.item()
+                            extra_update_height_visual_mse += self.env.height_visual_mse_loss.item()
+                            extra_update_contrastive += self.env.contrastive_loss.item()
+                            extra_update_visual_l1 += self.env.visual_l1_loss.item()
+                            extra_update_height_l1 += self.env.height_l1_loss.item()
+                            extra_update_total += self.env.total_wm_loss.item()
+
+                        denom = self.num_steps_per_env + extra_wm_updates
+                        current_iter_wm_visual_mse += extra_update_visual_mse
+                        current_iter_wm_height_mse += extra_update_height_mse
+                        current_iter_wm_height_visual_mse += extra_update_height_visual_mse
+                        current_iter_wm_contrastive += extra_update_contrastive
+                        current_iter_wm_visual_l1 += extra_update_visual_l1
+                        current_iter_wm_height_l1 += extra_update_height_l1
+                        current_iter_total += extra_update_total
+                    else:
+                        denom = self.num_steps_per_env
+                else:
+                    denom = self.num_steps_per_env
+
                 # Learning step
                 start = stop
                 self.alg.compute_returns(obs_dict)
@@ -166,13 +203,13 @@ class MGDPPolicyRunner:
 
 
  
-            wm_visual_mse_loss = current_iter_wm_visual_mse / self.num_steps_per_env
-            wm_height_mse_loss = current_iter_wm_height_mse / self.num_steps_per_env
-            wm_height_visual_mse_loss = current_iter_wm_height_visual_mse / self.num_steps_per_env
-            wm_contrastive_loss_loss = current_iter_wm_contrastive / self.num_steps_per_env
-            wm_visual_l1_loss = current_iter_wm_visual_l1 / self.num_steps_per_env
-            wm_height_l1_loss = current_iter_wm_height_l1 / self.num_steps_per_env
-            wm_loss= current_iter_total  / self.num_steps_per_env
+            wm_visual_mse_loss = current_iter_wm_visual_mse / denom
+            wm_height_mse_loss = current_iter_wm_height_mse / denom
+            wm_height_visual_mse_loss = current_iter_wm_height_visual_mse / denom
+            wm_contrastive_loss_loss = current_iter_wm_contrastive / denom
+            wm_visual_l1_loss = current_iter_wm_visual_l1 / denom
+            wm_height_l1_loss = current_iter_wm_height_l1 / denom
+            wm_loss= current_iter_total  / denom
 
   
             stop = time.time()
@@ -508,4 +545,3 @@ class MGDPPolicyRunner:
         if device is not None:
             self.alg.actor_critic.to(device)
         return self.alg.actor_critic.act_inference, self.alg.actor_critic.evaluate
-

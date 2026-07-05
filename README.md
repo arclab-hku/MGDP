@@ -59,6 +59,7 @@ We leverage NVIDIA Warp to enable efficient parallel computation of depth images
       ```bash
       python legged_gym/scripts/vis_stage2.py
       ```
+   - Set `COMPARE_DEPTH_VIS = True` in `vis_stage1.py` (or run with `--compare_depth_vis`) to show noisy / predicted / clean depth comparison during play.
 4. **View the terrain**
    ```bash
    python legged_gym/scripts/play_terrain.py

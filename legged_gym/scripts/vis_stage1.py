@@ -4,34 +4,41 @@ DOG_NAMES = [ "go2"]
 
 os.environ["DOG_NAMES"] = ",".join(DOG_NAMES)
 
+from legged_gym import LEGGED_GYM_ROOT_DIR
 from legged_gym.scripts.play_stage1 import *
 
 CUDA_DEVICE_ID = 0
 
-current_dir = os.getcwd()
-parent_dir = os.path.dirname(current_dir)
-
 EXPORT_POLICY = False
 RECORD_FRAMES = False
-MOVE_CAMERA = True
+MOVE_CAMERA = False       # follow ref_env robot; set False for a fixed overview camera
+LOG_STATES = False       # set True to pop up velocity comparison plots after ~300 steps
+COMPARE_DEPTH_VIS = True # noisy / predicted / clean depth panel (Stage 1 main visual)
+VIS_ENV_ID = 2           # default env to visualize (0-based); override via --vis_env_id
+
 args = get_args()
 
 args.task = 'random_dog_stage1'
-args.num_envs = 64
+args.num_envs = 4
 args.headless = False
+
 cuda = f"cuda:{CUDA_DEVICE_ID}"
 args.rl_device = cuda
 args.render_device = cuda
 args.sim_device = cuda
 args.graphics_device_num = CUDA_DEVICE_ID
-args.checkpoint_model = 'model_10000.pt'
+args.checkpoint_model = 'last.pt'
 args.load_world_model_policy = True
 args.update_wm = False
+if args.compare_depth_vis is None:
+    args.compare_depth_vis = COMPARE_DEPTH_VIS
+if args.vis_env_id is None:
+    args.vis_env_id = VIS_ENV_ID
 
 args.algo = 'MGDP'
-real_path = "/models/MGDP/stage1/001"
+model_dir = os.path.join(LEGGED_GYM_ROOT_DIR, 'outputs/random_dog/MGDP/stage1/baseline')
 
-args.output_name = parent_dir + real_path
-args.resume_name = parent_dir + real_path
-args.load_world_model_path = parent_dir + real_path
-play(args, EXPORT_POLICY, RECORD_FRAMES, MOVE_CAMERA)
+args.output_name = model_dir
+args.resume_name = model_dir
+args.load_world_model_path = model_dir
+play(args, EXPORT_POLICY, MOVE_CAMERA, RECORD_FRAMES, LOG_STATES)

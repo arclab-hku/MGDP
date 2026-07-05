@@ -1,4 +1,3 @@
-README.md
 setup.py
 legged_gym/__init__.py
 legged_gym.egg-info/PKG-INFO

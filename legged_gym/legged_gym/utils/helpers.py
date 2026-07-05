@@ -1,4 +1,5 @@
 import os
+import sys
 import copy
 import torch
 import numpy as np
@@ -97,6 +98,11 @@ def update_cfg_from_args(env_cfg, cfg_train, args):
             env_cfg.env.num_envs = args.num_envs
         if args.graphics_device_num is not None:
             env_cfg.env.graphics_device_num = args.graphics_device_num
+        if getattr(args, 'vis_env_id', None) is not None:
+            ref_env = max(0, int(args.vis_env_id))
+            env_cfg.viewer.ref_env = ref_env
+            target_num_envs = args.num_envs if args.num_envs is not None else env_cfg.env.num_envs
+            env_cfg.env.num_envs = max(int(target_num_envs), ref_env + 1)
         if getattr(env_cfg, 'camera', None) is not None:
             if getattr(args, 'update_wm', None) is not None:
                 env_cfg.camera.update_wm = args.update_wm
@@ -105,6 +111,8 @@ def update_cfg_from_args(env_cfg, cfg_train, args):
             if getattr(args, 'load_world_model_path', None) is not None:
                 env_cfg.camera.load_world_model_policy = True
                 env_cfg.camera.load_world_model_policy_file = args.load_world_model_path
+            if getattr(args, 'compare_depth_vis', None) is not None:
+                env_cfg.camera.render_compare_pre_vis = args.compare_depth_vis
             if getattr(args, 'resume', False) and getattr(args, 'resume_name', None):
                 if getattr(env_cfg.camera, 'world_model', False):
                     env_cfg.camera.load_world_model_policy = True
@@ -196,6 +204,14 @@ def get_args():
         {"name": "--load_world_model_path", "type": str, "default": None,
          "help": "when set (e.g. in vis/play), env loads world model from this path (sets camera.load_world_model_policy=True)"},
 
+        {"name": "--compare_depth_vis", "action": "store_true", "default": None,
+         "help": "Show side-by-side depth comparison: noisy / reconstructed / clean."},
+        {"name": "--no_compare_depth_vis", "action": "store_true", "default": False,
+         "help": "Disable depth comparison panel during visualization."},
+
+        {"name": "--vis_env_id", "type": int, "default": None,
+         "help": "Parallel env index for depth panel / camera follow (0-based, sets viewer.ref_env)."},
+
         {"name": "--decoder_name", "type": str, "default": None,
          "help": "which resume_name used to train the decoder"},
         # export policy for usage in C++
@@ -212,6 +228,13 @@ def get_args():
     args.sim_device = args.sim_device_type
     if args.sim_device == 'cuda':
         args.sim_device += f":{args.sim_device_id}"
+    # gymutil.parse_arguments ignores default= for store_true actions, so an
+    # absent --compare_depth_vis becomes False instead of None. Treat False as
+    # "unset" unless the user explicitly passed a depth-vis CLI flag.
+    if '--compare_depth_vis' not in sys.argv and '--no_compare_depth_vis' not in sys.argv:
+        args.compare_depth_vis = None
+    if args.no_compare_depth_vis:
+        args.compare_depth_vis = False
     return args
 
 

@@ -5,7 +5,7 @@ import os
 
 import isaacgym
 from legged_gym.envs import *
-from legged_gym.utils import  get_args, export_policy_as_jit, task_registry, Logger
+from legged_gym.utils import  get_args, export_policy_as_jit, task_registry, Logger, update_cfg_from_args
 import pandas as pd
 import numpy as np
 import torch
@@ -24,18 +24,12 @@ def play(args,EXPORT_POLICY, MOVE_CAMERA, RECORD_FRAMES):
             env_cfg.camera.load_world_model_policy_file = args.load_world_model_path
         env_cfg.camera.load_world_model_policy = True
 
-    
     env_cfg.terrain.num_cols_half = env_cfg.terrain.num_cols
     env_cfg.terrain.border_size = 5  # [m]
-    env_cfg.terrain.max_init_terrain_level = 5 # starting curriculum state
+    env_cfg.terrain.max_init_terrain_level = 5  # starting curriculum state
 
-    env_cfg.terrain.num_rows = env_cfg.terrain.max_init_terrain_level+1
+    env_cfg.terrain.num_rows = env_cfg.terrain.max_init_terrain_level + 1
     env_cfg.terrain.num_cols = 10
-
-    # env_cfg.terrains.terrain_length = 10.
-    # env_cfg.terrains.terrain_width = 10.
-    # env_cfg.terrains.num_rows = 10  # number of terrains rows (levels)
-    # env_cfg.terrains.num_cols = 20  # number of terrains cols (types)
 
     env_cfg.terrain.curriculum = True
     env_cfg.noise.add_noise = False
@@ -52,6 +46,13 @@ def play(args,EXPORT_POLICY, MOVE_CAMERA, RECORD_FRAMES):
     env_cfg.commands.ranges.ang_vel_yaw = [0.0, 0.0]
     env_cfg.commands.ranges.heading =  [0.0, 0.0]
 
+    env_cfg, _ = update_cfg_from_args(env_cfg, None, args)
+    if getattr(args, 'vis_env_id', None) is not None:
+        cprint(
+            f"Visualization ref_env={env_cfg.viewer.ref_env} (num_envs={env_cfg.env.num_envs})",
+            'cyan', attrs=['bold'],
+        )
+
     # prepare environment
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
     obs_dict = env.reset()
@@ -64,13 +65,14 @@ def play(args,EXPORT_POLICY, MOVE_CAMERA, RECORD_FRAMES):
     policy, pre_extrin_en = ppo_runner.get_inference_policy(device=env.device)
 
     logger = Logger(env.dt)
-    robot_index = 0 # which robot is used for logging
+    robot_index = getattr(env_cfg.viewer, 'ref_env', 0)
     stop_state_log = 300 # number of steps before plotting states
     stop_rew_log = env.max_episode_length + 1 # number of steps before print average episode rewards
-    camera_position = np.array(env_cfg.viewer.pos, dtype=np.float64)
-    camera_vel = np.array([0.75, 0., 0.])
-
-    camera_direction = np.array(env_cfg.viewer.lookat)
+    cam_offset = (
+        np.array(env_cfg.viewer.pos, dtype=np.float64)
+        - np.array(env_cfg.viewer.lookat, dtype=np.float64)
+    )
+    look_ahead = np.array([1.5, 0.0, 0.0])
     img_idx = 0
 
     real_vels = []; real_contacts = []; pre_vels=[]; pre_contacts = []; steps = []
@@ -92,9 +94,9 @@ def play(args,EXPORT_POLICY, MOVE_CAMERA, RECORD_FRAMES):
                 env.gym.write_viewer_image_to_file(env.viewer, filename)
                 img_idx += 1
         if MOVE_CAMERA:
-            camera_position_delt = camera_vel * env.dt
-            camera_position = camera_position+camera_position_delt
-            camera_direction = camera_direction + camera_position_delt
+            robot_pos = env.root_states[robot_index, :3].detach().cpu().numpy()
+            camera_direction = robot_pos + look_ahead
+            camera_position = camera_direction + cam_offset
             env.set_camera(camera_position, camera_direction)
         steps.append(i)
         # print('ds', i, extrin_en)
@@ -134,5 +136,5 @@ if __name__ == '__main__':
     RECORD_FRAMES = False
     MOVE_CAMERA = False
     args = get_args()
-    play(args, EXPORT_POLICY, RECORD_FRAMES, MOVE_CAMERA)
+    play(args, EXPORT_POLICY, MOVE_CAMERA, RECORD_FRAMES)
     

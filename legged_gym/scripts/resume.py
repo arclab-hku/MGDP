@@ -7,14 +7,10 @@ DOG_NAMES = ["aliengo", "anymal_c", "b1", "go1", "lite3", "mini_cheetah", "mini_
 os.environ["DOG_NAMES"] = ",".join(DOG_NAMES)
 
 import isaacgym
+from legged_gym import LEGGED_GYM_ROOT_DIR
 from legged_gym.scripts.train import *
 
 CUDA_DEVICE_ID = 0
-
-current_dir = os.getcwd()
-print("current_dir:", current_dir)
-parent_dir = os.path.dirname(current_dir)
-print("parent_dir2:", parent_dir)
 
 args = get_args()
 args.task = 'random_dog_stage2'
@@ -32,11 +28,11 @@ args.load_world_model_policy = True
 args.checkpoint_model = 'model_10000.pt'
 args.resume = True
 
-real_path = '/models/MGDP/stage1/001'
-args.resume_name = parent_dir + real_path
-args.load_world_model_path = parent_dir + real_path
+stage1_model_dir = os.path.join(LEGGED_GYM_ROOT_DIR, 'outputs/random_dog/MGDP/stage1/baseline')
+args.resume_name = stage1_model_dir
+args.load_world_model_path = stage1_model_dir
 
-args.output_name = parent_dir + '/outputs/random_dog/MGDP/stage2/001'
+args.output_name = os.path.join(LEGGED_GYM_ROOT_DIR, 'outputs/random_dog/MGDP/stage2/resume')
 
-
+print("args.output_name:", args.output_name)
 train(args)

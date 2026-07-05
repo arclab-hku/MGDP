@@ -6,16 +6,14 @@ DOG_NAMES = [ "go2"]
 os.environ["DOG_NAMES"] = ",".join(DOG_NAMES)
 
 import isaacgym
+from legged_gym import LEGGED_GYM_ROOT_DIR
 from legged_gym.scripts.train import *
 
 CUDA_DEVICE_ID = 0
 
-current_dir = os.getcwd()
-parent_dir = os.path.dirname(current_dir)
-
 args = get_args()
 args.task = 'random_dog_stage1'
-args.num_envs = 64
+args.num_envs = 1024
 args.headless = True
 cuda = f"cuda:{CUDA_DEVICE_ID}"
 args.rl_device = cuda
@@ -28,7 +26,7 @@ args.algo = 'MGDP'
 
 args.load_world_model_policy = False
 
-args.output_name = parent_dir + '/outputs/random_dog/MGDP/stage1/001'
+args.output_name = os.path.join(LEGGED_GYM_ROOT_DIR, 'outputs/random_dog/MGDP/stage1/baseline1')
 
 print("args.output_name:", args.output_name)
 train(args)
