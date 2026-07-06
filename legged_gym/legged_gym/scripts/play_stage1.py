@@ -32,6 +32,16 @@ def play(args, EXPORT_POLICY, MOVE_CAMERA, RECORD_FRAMES, LOG_STATES=False):
                         f"Depth compare vis ON -> OpenCV window + {env_cfg.camera.compare_vis_save_dir}/latest.png",
                         'cyan', attrs=['bold'],
                     )
+        if getattr(args, 'compare_height_vis', None) is not None:
+            env_cfg.camera.render_compare_pre_map = args.compare_height_vis
+            if args.compare_height_vis:
+                vis_root = args.load_world_model_path or args.resume_name or args.output_name
+                if vis_root:
+                    env_cfg.camera.compare_height_vis_save_dir = os.path.join(vis_root, 'vis_height')
+                    cprint(
+                        f"Height compare vis ON -> OpenCV window + {env_cfg.camera.compare_height_vis_save_dir}/latest.png",
+                        'cyan', attrs=['bold'],
+                    )
         env_cfg.camera.load_world_model_policy = True
 
     env_cfg.terrain.num_cols_half = env_cfg.terrain.num_cols

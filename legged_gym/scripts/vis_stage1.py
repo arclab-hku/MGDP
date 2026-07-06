@@ -14,7 +14,8 @@ RECORD_FRAMES = False
 MOVE_CAMERA = False       # follow ref_env robot; set False for a fixed overview camera
 LOG_STATES = False       # set True to pop up velocity comparison plots after ~300 steps
 COMPARE_DEPTH_VIS = True # noisy / predicted / clean depth panel (Stage 1 main visual)
-VIS_ENV_ID = 2           # default env to visualize (0-based); override via --vis_env_id
+COMPARE_HEIGHT_VIS = True # predicted / real sparse elevation-map panel
+VIS_ENV_ID = 0           # default env to visualize (0-based); override via --vis_env_id
 
 args = get_args()
 
@@ -32,6 +33,8 @@ args.load_world_model_policy = True
 args.update_wm = False
 if args.compare_depth_vis is None:
     args.compare_depth_vis = COMPARE_DEPTH_VIS
+if args.compare_height_vis is None:
+    args.compare_height_vis = COMPARE_HEIGHT_VIS
 if args.vis_env_id is None:
     args.vis_env_id = VIS_ENV_ID
 

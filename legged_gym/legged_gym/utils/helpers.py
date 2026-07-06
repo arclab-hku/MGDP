@@ -113,6 +113,8 @@ def update_cfg_from_args(env_cfg, cfg_train, args):
                 env_cfg.camera.load_world_model_policy_file = args.load_world_model_path
             if getattr(args, 'compare_depth_vis', None) is not None:
                 env_cfg.camera.render_compare_pre_vis = args.compare_depth_vis
+            if getattr(args, 'compare_height_vis', None) is not None:
+                env_cfg.camera.render_compare_pre_map = args.compare_height_vis
             if getattr(args, 'resume', False) and getattr(args, 'resume_name', None):
                 if getattr(env_cfg.camera, 'world_model', False):
                     env_cfg.camera.load_world_model_policy = True
@@ -208,9 +210,13 @@ def get_args():
          "help": "Show side-by-side depth comparison: noisy / reconstructed / clean."},
         {"name": "--no_compare_depth_vis", "action": "store_true", "default": False,
          "help": "Disable depth comparison panel during visualization."},
+        {"name": "--compare_height_vis", "action": "store_true", "default": None,
+         "help": "Show side-by-side height comparison: predicted / real sparse elevation map."},
+        {"name": "--no_compare_height_vis", "action": "store_true", "default": False,
+         "help": "Disable height comparison panel during visualization."},
 
         {"name": "--vis_env_id", "type": int, "default": None,
-         "help": "Parallel env index for depth panel / camera follow (0-based, sets viewer.ref_env)."},
+         "help": "Parallel env index for depth/height panel and camera follow (0-based, sets viewer.ref_env)."},
 
         {"name": "--decoder_name", "type": str, "default": None,
          "help": "which resume_name used to train the decoder"},
@@ -235,6 +241,10 @@ def get_args():
         args.compare_depth_vis = None
     if args.no_compare_depth_vis:
         args.compare_depth_vis = False
+    if '--compare_height_vis' not in sys.argv and '--no_compare_height_vis' not in sys.argv:
+        args.compare_height_vis = None
+    if args.no_compare_height_vis:
+        args.compare_height_vis = False
     return args
 
 
@@ -278,5 +288,4 @@ class PolicyExporterLSTM(torch.nn.Module):
         self.to('cpu')
         traced_script_module = torch.jit.script(self)
         traced_script_module.save(path)
-
 

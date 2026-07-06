@@ -13,27 +13,34 @@ CUDA_DEVICE_ID = 0
 
 EXPORT_POLICY = False
 RECORD_FRAMES = False
-MOVE_CAMERA = True
+MOVE_CAMERA = False
+
+COMPARE_DEPTH_VIS = True # noisy / predicted / clean depth panel
+COMPARE_HEIGHT_VIS = True # predicted / real sparse elevation-map panel
 VIS_ENV_ID = 0           # default env to follow / log (0-based); override via --vis_env_id
 
 args = get_args()
 
 args.task = 'random_dog_stage2'
-args.num_envs = 64
+args.num_envs = 16
 args.headless = False
 cuda = f"cuda:{CUDA_DEVICE_ID}"
 args.rl_device = cuda
 args.render_device = cuda
 args.sim_device = cuda
 args.graphics_device_num = CUDA_DEVICE_ID
-args.checkpoint_model = 'model_26000.pt'
+args.checkpoint_model = 'model_9000.pt'
 args.load_world_model_policy = True
 args.update_wm = False
+if args.compare_depth_vis is None:
+    args.compare_depth_vis = COMPARE_DEPTH_VIS
+if args.compare_height_vis is None:
+    args.compare_height_vis = COMPARE_HEIGHT_VIS
 if args.vis_env_id is None:
     args.vis_env_id = VIS_ENV_ID
 
 args.algo = 'MGDP'
-model_dir = os.path.join(LEGGED_GYM_ROOT_DIR, 'models/MGDP/stage2/001')
+model_dir = os.path.join(LEGGED_GYM_ROOT_DIR, 'outputs/random_dog/MGDP/stage2/resume')
 
 args.output_name = model_dir
 args.resume_name = model_dir

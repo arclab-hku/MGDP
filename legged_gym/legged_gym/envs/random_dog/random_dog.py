@@ -302,21 +302,35 @@ class Randomdog(CameraMixin, Legged_terrains, Legged_camera, Legged_rewards, Leg
                 num_updates=sensor_steps if getattr(self, '_update_wm', self.cfg.camera.update_wm) else 0,
             )
             if self.cfg.camera.render_compare_pre_map and self.use_map_decoder and obs_height_pre is not None:
-                pred_height = obs_height_pre[0, 0].detach().cpu().numpy()
-                true_height = obs_height_input[0, 0].detach().cpu().numpy()
+                vis_env_id = getattr(self.cfg.viewer, 'ref_env', 0)
+                vis_env_id = min(max(vis_env_id, 0), obs_height_pre.size(0) - 1)
+                pred_height = obs_height_pre[vis_env_id, 0].detach().cpu().numpy()
+                true_height = obs_height_input[vis_env_id, 0].detach().cpu().numpy()
                 if getattr(self.cfg.camera, 'debug_height_stats', False) and self.global_counter % 200 == 0:
-                    pred_t = obs_height_pre[0, 0].detach()
-                    true_t = obs_height_input[0, 0].detach()
-                    cprint(f"[WM height] step={self.global_counter} pred: min={pred_t.min().item():.4f} max={pred_t.max().item():.4f} mean={pred_t.mean().item():.4f} std={pred_t.std().item():.4f} | true: min={true_t.min().item():.4f} max={true_t.max().item():.4f} mean={true_t.mean().item():.4f} std={true_t.std().item():.4f}", 'cyan')
+                    pred_t = obs_height_pre[vis_env_id, 0].detach()
+                    true_t = obs_height_input[vis_env_id, 0].detach()
+                    cprint(f"[WM height] env={vis_env_id} step={self.global_counter} pred: min={pred_t.min().item():.4f} max={pred_t.max().item():.4f} mean={pred_t.mean().item():.4f} std={pred_t.std().item():.4f} | true: min={true_t.min().item():.4f} max={true_t.max().item():.4f} mean={true_t.mean().item():.4f} std={true_t.std().item():.4f}", 'cyan')
                 if pred_height.shape != true_height.shape:
                     true_height = cv2.resize(
                         true_height,
                         (pred_height.shape[1], pred_height.shape[0]),
                         interpolation=cv2.INTER_LINEAR
                     )
-                comparison_img = self.draw_sparse_heatmap(pred_height, true_height, cell_size=60)
-                cv2.imshow("Sparse Height Comparison", comparison_img)
-                cv2.waitKey(1)
+                if not getattr(self, '_height_vis_stats_printed', False):
+                    diff = np.abs(pred_height - true_height)
+                    cprint(
+                        f"[height vis] env={vis_env_id} | pred [{pred_height.min():.4f}, {pred_height.max():.4f}] | "
+                        f"real [{true_height.min():.4f}, {true_height.max():.4f}] | "
+                        f"MAE={diff.mean():.6f}, max|diff|={diff.max():.6f}",
+                        'cyan',
+                    )
+                    self._height_vis_stats_printed = True
+                comparison_img = self.draw_sparse_heatmap(
+                    pred_height,
+                    true_height,
+                    cell_size=getattr(self.cfg.camera, 'compare_height_vis_scale', 36),
+                )
+                self.show_height_compare_panel(comparison_img)
 
             if self.cfg.camera.render_compare_pre_vis and visual_pre is not None:
                 vis_env_id = getattr(self.cfg.viewer, 'ref_env', 0)
@@ -437,16 +451,48 @@ class Randomdog(CameraMixin, Legged_terrains, Legged_camera, Legged_rewards, Leg
             )
             self._depth_vis_headless_warned = True
 
+    def show_height_compare_panel(self, combined_bgr):
+        """Show height-compare panel in an OpenCV window; always save PNG as fallback."""
+        window_name = "Height Compare: Predict | Real"
+        save_dir = getattr(self.cfg.camera, 'compare_height_vis_save_dir', None)
+        if save_dir:
+            os.makedirs(save_dir, exist_ok=True)
+            cv2.imwrite(os.path.join(save_dir, 'latest.png'), combined_bgr)
+
+        if not getattr(self, '_height_vis_window_ready', False):
+            try:
+                cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+                cv2.resizeWindow(window_name, combined_bgr.shape[1], combined_bgr.shape[0])
+                self._height_vis_window_ready = True
+            except cv2.error:
+                self._height_vis_window_ready = False
+
+        if getattr(self, '_height_vis_window_ready', False):
+            cv2.imshow(window_name, combined_bgr)
+            cv2.waitKey(1)
+        elif not getattr(self, '_height_vis_headless_warned', False):
+            hint = save_dir if save_dir else "(set compare_height_vis_save_dir to save PNG)"
+            cprint(
+                f"[height vis] OpenCV window unavailable (no GUI DISPLAY?). "
+                f"View saved frames at: {hint}/latest.png",
+                'yellow', attrs=['bold'],
+            )
+            self._height_vis_headless_warned = True
+
     def build_world_model_batch(self):
         visual_input = torch.nan_to_num(self.image_buf.detach().clone(), nan=0.0, posinf=1.0, neginf=0.0)
         target_clean = torch.nan_to_num(self.image_clean_buf.detach().clone(), nan=0.0, posinf=1.0, neginf=0.0)
         n_rows = getattr(self.cfg.terrain, 'num_point_x', 17)
         n_cols = getattr(self.cfg.terrain, 'num_point_y', 11)
         num_points = n_rows * n_cols
-        n_size = int((self.heights.shape[1] / max(1, num_points)) ** 0.5)
-        height_input = (self.heights / self.obs_scales.height_measurements).view(
-            self.image_buf.size(0), 1, n_size * n_rows, n_size * n_cols
-        )
+        heights_norm = self.heights / self.obs_scales.height_measurements
+        if heights_norm.shape[1] == num_points:
+            height_input = heights_norm.view(self.image_buf.size(0), 1, n_rows, n_cols)
+        else:
+            n_size = int((heights_norm.shape[1] / max(1, num_points)) ** 0.5)
+            height_input = heights_norm.view(
+                self.image_buf.size(0), 1, n_size * n_rows, n_size * n_cols
+            )
         height_input = torch.clamp(height_input, -1.0, 1.0)
         height_input = torch.nan_to_num(height_input, nan=0.0, posinf=1.0, neginf=-1.0)
         return {
@@ -490,12 +536,18 @@ class Randomdog(CameraMixin, Legged_terrains, Legged_camera, Legged_rewards, Leg
                         obs_height_input=obs_height_input
                     )
 
-                    w_v_mse = getattr(self.cfg.camera, 'wm_visual_mse_weight', 1.0)
+                    w_v_mse = getattr(self.cfg.camera, 'wm_visual_mse_weight', 1.2)
+                    w_v_l1 = getattr(self.cfg.camera, 'wm_visual_l1_weight', 0.3)
                     w_h_mse = getattr(self.cfg.camera, 'wm_height_mse_weight', 1.0)
+                    w_h_l1 = getattr(self.cfg.camera, 'wm_height_l1_weight', 0.0)
+                    w_hv = getattr(self.cfg.camera, 'wm_height_visual_mse_weight', 0.0)
                     w_cont = getattr(self.cfg.camera, 'wm_contrastive_weight', 0.3)
                     self.total_wm_loss = (
                         w_v_mse * self.visual_mse_loss +
+                        w_v_l1 * self.visual_l1_loss +
                         w_h_mse * self.height_mse_loss +
+                        w_h_l1 * self.height_l1_loss +
+                        w_hv * self.height_visual_mse_loss +
                         w_cont * self.contrastive_loss
                     )
                     if do_train:
@@ -523,7 +575,7 @@ class Randomdog(CameraMixin, Legged_terrains, Legged_camera, Legged_rewards, Leg
         visual_pre = visual_pre.clamp(0.0, 1.0)
         target_clean = target_clean.clamp(0.0, 1.0)
         visual_mse_loss = self.mse_loss(visual_pre, target_clean)
-        visual_l1_loss = torch.zeros((), device=self.device)
+        visual_l1_loss = self.compute_edge_loss(visual_pre, target_clean)
 
         obs_height_pre = None
         height_mse_loss = height_l1_loss = contrastive_loss = height_visual_mse_loss = 0.0
@@ -538,16 +590,16 @@ class Randomdog(CameraMixin, Legged_terrains, Legged_camera, Legged_rewards, Leg
             )
 
             height_mse_loss = self.mse_loss(obs_height_pre, obs_height_input)
-            height_l1_loss = torch.zeros((), device=self.device)
+            height_l1_loss = self.compute_edge_loss(obs_height_pre, obs_height_input)
 
-            height_token_norm = F.normalize(height_token, p=2, dim=1, eps=1e-8)
-            visual_token_32 = visual_token[:, 0:32]
-            visual_token_norm = F.normalize(visual_token_32, p=2, dim=1, eps=1e-8)
+            shared_dims = min(height_token.size(1), visual_token.size(1))
+            height_token_norm = F.normalize(height_token[:, :shared_dims], p=2, dim=1, eps=1e-8)
+            visual_token_norm = F.normalize(visual_token[:, :shared_dims], p=2, dim=1, eps=1e-8)
             if batch_size >= 2:
                 sim_matrix = torch.matmul(height_token_norm, visual_token_norm.T) / self.temperature
                 labels = torch.arange(batch_size, device=self.device)
                 contrastive_loss = self.info_nce_loss(sim_matrix, labels)
-                height_visual_mse_loss = torch.zeros((), device=self.device)
+                height_visual_mse_loss = self.mse_loss(height_token_norm, visual_token_norm)
             else:
                 contrastive_loss = torch.tensor(0.0, device=self.device)
                 height_visual_mse_loss = torch.tensor(0.0, device=self.device)

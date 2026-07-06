@@ -388,71 +388,71 @@ class Legged_terrains(LeggedRobot):
         grid_x, grid_y = torch.meshgrid(x, y)
         return grid_x, grid_y
 
-    def draw_sparse_heatmap(self, pred_height, true_height, cell_size=50, gap=20):
-        
-        
-        all_values = np.concatenate([pred_height.flatten(), true_height.flatten()])
-        vmin, vmax = -1, 1
-        if vmax - vmin < 1e-8:
-            vmin, vmax = 0, 1
+    def draw_sparse_heatmap(self, pred_height, true_height, cell_size=50, gap=24):
+        pred_height = np.asarray(pred_height, dtype=np.float32)
+        true_height = np.asarray(true_height, dtype=np.float32)
 
-        
-        canvas_height = 17 * cell_size
-        canvas_width = 2 * 11 * cell_size + gap
-        canvas = np.ones((canvas_height, canvas_width, 3), dtype=np.uint8) * 255
+        rows = min(pred_height.shape[0], true_height.shape[0])
+        cols = min(pred_height.shape[1], true_height.shape[1])
+        pred_height = pred_height[:rows, :cols]
+        true_height = true_height[:rows, :cols]
 
-        
-        for i in range(17 + 1):
-            y = i * cell_size
-            cv2.line(canvas, (0, y), (canvas_width, y), (200, 200, 200), 1)
-        for j in range(11 + 1):
-            x = j * cell_size
-            cv2.line(canvas, (x, 0), (x, canvas_height), (200, 200, 200), 1)
-        for j in range(11 + 1):
-            x = 11 * cell_size + gap + j * cell_size
-            cv2.line(canvas, (x, 0), (x, canvas_height), (200, 200, 200), 1)
-        cv2.line(canvas, (11 * cell_size, 0), (11 * cell_size, canvas_height), (150, 150, 150), 2)
-        cv2.line(canvas, (11 * cell_size + gap, 0), (11 * cell_size + gap, canvas_height), (150, 150, 150), 2)
+        stacked = np.concatenate([pred_height.reshape(-1), true_height.reshape(-1)])
+        max_abs = float(np.max(np.abs(stacked))) if stacked.size else 1.0
+        max_abs = max(max_abs, 1e-6)
+        vmin, vmax = -max_abs, max_abs
 
-        for i in range(17):
-            for j in range(11):
-                pred_val = pred_height[i, j]
-                pred_norm = (pred_val - vmin) / (vmax - vmin)
-                pred_color = (
-                    int(255 * (1 - pred_norm)),
-                    int(255 * min(2 * pred_norm, 2 - 2 * pred_norm)),
-                    int(255 * pred_norm)
-                )
-                pred_x = j * cell_size + cell_size // 2
-                pred_y = i * cell_size + cell_size // 2
-                pred_radius = cell_size // 3
-                cv2.circle(canvas, (pred_x, pred_y), pred_radius, pred_color, -1) 
-        
-                true_val = true_height[i, j]
-                true_norm = (true_val - vmin) / (vmax - vmin)
-                true_color = (
-                    int(255 * (1 - true_norm)),
-                    int(255 * min(2 * true_norm, 2 - 2 * true_norm)),
-                    int(255 * true_norm)
-                )
-            
-                true_x = 11 * cell_size + gap + j * cell_size + cell_size // 2
-                true_y = i * cell_size + cell_size // 2
-                
-                true_radius = cell_size // 3
-                cv2.circle(canvas, (true_x, true_y), true_radius, true_color, -1)
-                
-                # cv2.putText(canvas, f"{true_val:.2f}",
-                #             (true_x - cell_size // 3, true_y + cell_size // 2 - 5),
-                #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+        title_h = 42
+        footer_h = 34
+        canvas_height = title_h + rows * cell_size + footer_h
+        canvas_width = 2 * cols * cell_size + gap
+        canvas = np.full((canvas_height, canvas_width, 3), 255, dtype=np.uint8)
 
-        
-        # cv2.putText(canvas, "Predicted Heights",
-        #             (11 * cell_size // 2 - 80, 20),
-        #             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
-        # cv2.putText(canvas, "True Heights",
-        #             (11 * cell_size + gap + 11 * cell_size // 2 - 60, 20),
-        #             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
+        def value_to_color(val):
+            norm = float(np.clip((val - vmin) / (vmax - vmin), 0.0, 1.0))
+            return (
+                int(255 * (1.0 - norm)),
+                int(255 * min(2.0 * norm, 2.0 - 2.0 * norm)),
+                int(255 * norm),
+            )
+
+        def draw_panel(x_offset, data, title):
+            panel_top = title_h
+            panel_bottom = panel_top + rows * cell_size
+            panel_right = x_offset + cols * cell_size
+
+            cv2.putText(
+                canvas, title, (x_offset + 6, 28),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (35, 35, 35), 2, cv2.LINE_AA,
+            )
+
+            for i in range(rows + 1):
+                y = panel_top + i * cell_size
+                cv2.line(canvas, (x_offset, y), (panel_right, y), (214, 214, 214), 1)
+            for j in range(cols + 1):
+                x = x_offset + j * cell_size
+                cv2.line(canvas, (x, panel_top), (x, panel_bottom), (214, 214, 214), 1)
+
+            for i in range(rows):
+                for j in range(cols):
+                    center = (
+                        x_offset + j * cell_size + cell_size // 2,
+                        panel_top + i * cell_size + cell_size // 2,
+                    )
+                    color = value_to_color(data[i, j])
+                    cv2.circle(canvas, center, max(3, cell_size // 3), color, -1)
+
+        draw_panel(0, pred_height, "Predict")
+        draw_panel(cols * cell_size + gap, true_height, "Real")
+
+        stats = np.abs(pred_height - true_height)
+        mae = float(stats.mean()) if stats.size else 0.0
+        max_err = float(stats.max()) if stats.size else 0.0
+        footer_text = f"Shared scale [{vmin:.2f}, {vmax:.2f}]    MAE {mae:.3f}    Max {max_err:.3f}"
+        cv2.putText(
+            canvas, footer_text, (6, canvas_height - 10),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.55, (70, 70, 70), 1, cv2.LINE_AA,
+        )
 
         return canvas
 
@@ -940,5 +940,4 @@ class Legged_terrains(LeggedRobot):
         self.commands[:, 1] = vy
         self.commands[:, 2] = vang
         # self.commands[:, 3] = heading
-
 
