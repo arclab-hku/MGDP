@@ -1,0 +1,3 @@
+[console_scripts]
+warp-cam = warp_sensor.test.test_cam:test_cam
+warp-lidar = warp_sensor.test.test_lidar:test_lidar

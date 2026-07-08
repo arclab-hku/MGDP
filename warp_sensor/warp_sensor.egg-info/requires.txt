@@ -1,0 +1,14 @@
+torch
+torchvision
+numpy
+warp-lang==1.4.2
+pyyaml
+pygame
+typing
+pyqt5
+pyopengl
+zmq
+pyzmq
+trimesh
+proto-plus
+vizer
