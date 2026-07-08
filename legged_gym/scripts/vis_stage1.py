@@ -39,7 +39,7 @@ if args.vis_env_id is None:
     args.vis_env_id = VIS_ENV_ID
 
 args.algo = 'MGDP'
-model_dir = os.path.join(LEGGED_GYM_ROOT_DIR, 'outputs/random_dog/MGDP/stage1/baseline')
+model_dir = os.path.join(LEGGED_GYM_ROOT_DIR, 'models/MGDP/stage1/baseline')
 
 args.output_name = model_dir
 args.resume_name = model_dir

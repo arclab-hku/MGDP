@@ -29,7 +29,7 @@ args.rl_device = cuda
 args.render_device = cuda
 args.sim_device = cuda
 args.graphics_device_num = CUDA_DEVICE_ID
-args.checkpoint_model = 'model_9000.pt'
+args.checkpoint_model = 'last.pt'
 args.load_world_model_policy = True
 args.update_wm = False
 if args.compare_depth_vis is None:
@@ -40,7 +40,7 @@ if args.vis_env_id is None:
     args.vis_env_id = VIS_ENV_ID
 
 args.algo = 'MGDP'
-model_dir = os.path.join(LEGGED_GYM_ROOT_DIR, 'outputs/random_dog/MGDP/stage2/resume')
+model_dir = os.path.join(LEGGED_GYM_ROOT_DIR, 'models/MGDP/stage2/resume')
 
 args.output_name = model_dir
 args.resume_name = model_dir

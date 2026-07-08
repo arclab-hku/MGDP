@@ -83,10 +83,10 @@ class RandomCfgStage2(LeggedRobotBaseCfg):
             new_ang_vel_yaw = [0, 0]
             new_heading = [0, 0]
 
-            lin_vel_x = [0.0, 1.5]
-            lin_vel_y = [0.0, 0.0]
-            ang_vel_yaw = [0, 0]
-            heading = [0, 0]
+            # lin_vel_x = [0.0, 1.5]
+            # lin_vel_y = [0.0, 0.0]
+            # ang_vel_yaw = [0, 0]
+            # heading = [0, 0]
 
     class init_state(LeggedRobotBaseCfg.init_state):
         pos = [-4, 0, 0.45]  # x,y,z [m]

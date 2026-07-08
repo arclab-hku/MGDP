@@ -53,7 +53,7 @@ class RandomCfgStage1(LeggedRobotBaseCfg):
         wm_sensor_steps = 1
         wm_rollout_steps = 4
 
-        update_interval = 1
+        update_interval = 5
 
         load_world_model_policy = False
         load_world_model_policy_file = "{LEGGED_GYM_ROOT_DIR}" + '/models/MGDP/stage1/001'
